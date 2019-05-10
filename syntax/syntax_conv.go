@@ -39,66 +39,66 @@ type syntaxConv struct {
 	tokenFileSet *token.FileSet
 }
 
-func (c *syntaxConv) decl(d Syntax) ast.Decl {
-	switch d := d.(type) {
+func (c *syntaxConv) decl(s Syntax) ast.Decl {
+	switch s := s.(type) {
 	case nil:
 		return nil
 	case *Const:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(d)},
+			Specs: []ast.Spec{c.spec(s)},
 			Tok:   token.CONST,
 		}
 	case *ConstList:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: c.specs(d.List),
+			Specs: c.specs(s.List),
 			Tok:   token.CONST,
 		}
 	case *Func:
 		return &ast.FuncDecl{
-			Body: blockStmt(c.stmt(d.Body)),
-			Name: c.expr(d.Name).(*ast.Ident),
-			Recv: c.node(d.Receiver).(*ast.FieldList),
+			Body: blockStmt(c.stmt(s.Body)),
+			Name: c.expr(s.Name).(*ast.Ident),
+			Recv: c.node(s.Receiver).(*ast.FieldList),
 			Type: &ast.FuncType{
-				Params:  c.node(d.Parameters).(*ast.FieldList),
-				Results: c.node(d.Results).(*ast.FieldList),
+				Params:  c.node(s.Parameters).(*ast.FieldList),
+				Results: c.node(s.Results).(*ast.FieldList),
 			},
 		}
 	case *Import:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(d)},
+			Specs: []ast.Spec{c.spec(s)},
 			Tok:   token.IMPORT,
 		}
 	case *ImportList:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: c.specs(d.List),
+			Specs: c.specs(s.List),
 			Tok:   token.IMPORT,
 		}
 	case *Type:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(d)},
+			Specs: []ast.Spec{c.spec(s)},
 			Tok:   token.TYPE,
 		}
 	case *TypeList:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: c.specs(d.List),
+			Specs: c.specs(s.List),
 			Tok:   token.TYPE,
 		}
 	case *Var:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(d)},
+			Specs: []ast.Spec{c.spec(s)},
 			Tok:   token.VAR,
 		}
 	case *VarList:
 		return &ast.GenDecl{
 			// TODO: Lparen, Rparen
-			Specs: c.specs(d.List),
+			Specs: c.specs(s.List),
 			Tok:   token.VAR,
 		}
 	default:
