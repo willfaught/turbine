@@ -65,7 +65,7 @@ func varGroups(vs []*types.Var, fs []*ast.Field) (joined, ordered, original, spl
 	return
 }
 
-// TODO
+// Var is a variable declaration. TODO.
 type Var struct {
 	// TODO
 	Ident *Ident
@@ -74,7 +74,7 @@ type Var struct {
 	Type *Type
 }
 
-// TODO
+// VarGroup is a group of variable declarations. TODO.
 type VarGroup struct {
 	// TODO
 	Idents []*Ident

@@ -28,7 +28,7 @@ func varsTuple(t *types.Tuple) []*types.Var {
 	return vs
 }
 
-// TODO
+// Type is type information. TODO.
 type Type struct {
 	Context        *Type
 	Element        *Type

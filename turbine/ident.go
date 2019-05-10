@@ -9,7 +9,7 @@ import (
 	"github.com/fatih/camelcase"
 )
 
-// TODO
+// Ident is an identifier. TODO.
 type Ident struct {
 	Exported   string
 	Initial    string
@@ -18,7 +18,6 @@ type Ident struct {
 	Words      []string
 }
 
-// TODO
 func newIdent(name string) *Ident {
 	var id = Ident{Name: name}
 	var words []string
