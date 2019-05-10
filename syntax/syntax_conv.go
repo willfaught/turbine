@@ -50,87 +50,101 @@ type syntaxConv struct {
 	tokenFileSet *token.FileSet
 }
 
-func (c *syntaxConv) decl(s Syntax) ast.Decl {
-	switch s := s.(type) {
-	case nil:
-		return nil
+func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
+	switch from := from.(type) {
 	case *Const:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.CONST,
 			TokPos: c.next(lenConst),
-			Specs:  []ast.Spec{c.spec(s)},
+			Specs:  []ast.Spec{c.spec(from)},
 		}
+		c.markup(from.After)
 	case *ConstList:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.CONST,
 			TokPos: c.next(lenConst),
 			Lparen: c.next(lenLparen),
-			Specs:  c.specs(s.List),
+			Specs:  c.specs(from.List),
 			Rparen: c.next(lenRparen),
 		}
+		c.markup(from.After)
 	case *Func:
-		return &ast.FuncDecl{
-			Body: blockStmt(c.stmt(s.Body)),
-			Name: c.expr(s.Name).(*ast.Ident),
-			Recv: c.node(s.Receiver).(*ast.FieldList),
+		c.markup(from.Before)
+		to = &ast.FuncDecl{
+			Body: blockStmt(c.stmt(from.Body)),
+			Name: c.expr(from.Name).(*ast.Ident),
+			Recv: c.node(from.Receiver).(*ast.FieldList),
 			Type: &ast.FuncType{
-				Params:  c.node(s.Parameters).(*ast.FieldList),
-				Results: c.node(s.Results).(*ast.FieldList),
+				Params:  c.node(from.Parameters).(*ast.FieldList),
+				Results: c.node(from.Results).(*ast.FieldList),
 			},
 		}
+		c.markup(from.After)
 	case *Import:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.IMPORT,
 			TokPos: c.next(lenImport),
-			Specs:  []ast.Spec{c.spec(s)},
+			Specs:  []ast.Spec{c.spec(from)},
 		}
+		c.markup(from.After)
 	case *ImportList:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.IMPORT,
 			TokPos: c.next(lenImport),
 			Lparen: c.next(lenLparen),
-			Specs:  c.specs(s.List),
+			Specs:  c.specs(from.List),
 			Rparen: c.next(lenRparen),
 		}
+		c.markup(from.After)
 	case *Type:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.TYPE,
 			TokPos: c.next(lenType),
-			Specs:  []ast.Spec{c.spec(s)},
+			Specs:  []ast.Spec{c.spec(from)},
 		}
+		c.markup(from.After)
 	case *TypeList:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.TYPE,
 			TokPos: c.next(lenType),
 			Lparen: c.next(lenLparen),
-			Specs:  c.specs(s.List),
+			Specs:  c.specs(from.List),
 			Rparen: c.next(lenRparen),
 		}
+		c.markup(from.After)
 	case *Var:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.VAR,
 			TokPos: c.next(lenVar),
-			Specs:  []ast.Spec{c.spec(s)},
+			Specs:  []ast.Spec{c.spec(from)},
 		}
+		c.markup(from.After)
 	case *VarList:
-		return &ast.GenDecl{
+		c.markup(from.Before)
+		to = &ast.GenDecl{
 			Tok:    token.VAR,
 			TokPos: c.next(lenVar),
 			Lparen: c.next(lenLparen),
-			Specs:  c.specs(s.List),
+			Specs:  c.specs(from.List),
 			Rparen: c.next(lenRparen),
 		}
-	default:
-		return nil
+		c.markup(from.After)
 	}
+	return to
 }
 
-func (c *syntaxConv) decls(ss []Syntax) []ast.Decl {
-	var ds []ast.Decl
-	for _, s := range ss {
-		ds = append(ds, c.decl(s))
+func (c *syntaxConv) decls(from []Syntax) (to []ast.Decl) {
+	for _, s := range from {
+		to = append(to, c.decl(s))
 	}
-	return ds
+	return to
 }
 
 func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
