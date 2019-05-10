@@ -22,7 +22,7 @@ func maybeBlockStmt(s ast.Stmt) *ast.BlockStmt {
 
 type syntaxConv struct {
 	end          token.Pos
-	file         *ast.File
+	astFile      *ast.File
 	tokenFile    *token.File
 	tokenFileSet *token.FileSet
 }
@@ -134,7 +134,7 @@ func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 			lastLine = false
 		case *Line:
 			if lastLine && cg != nil {
-				c.file.Comments = append(c.file.Comments, cg)
+				c.astFile.Comments = append(c.astFile.Comments, cg)
 				cg = nil
 			}
 			c.tokenFile.AddLine(c.tokenFile.Offset(c.end))
@@ -144,7 +144,7 @@ func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 		}
 	}
 	if cg != nil {
-		c.file.Comments = append(c.file.Comments, cg)
+		c.astFile.Comments = append(c.astFile.Comments, cg)
 	}
 	return cg
 }

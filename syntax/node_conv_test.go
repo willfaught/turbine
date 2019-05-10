@@ -9,18 +9,18 @@ import (
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
-	"github.com/willfaught/inspect"
+	"github.com/willfaught/turbine"
 )
 
 func TestNodeConv(t *testing.T) {
 	var standardPaths []string
-	for path := range inspect.Standard {
+	for path := range turbine.Standard {
 		standardPaths = append(standardPaths, path)
 	}
 	sort.Strings(standardPaths)
 	for _, path := range standardPaths[:1] {
 		t.Run(path, func(t *testing.T) {
-			var loaderPkg, err = inspect.BuildLoader.Load(path)
+			var loaderPkg, err = turbine.BuildLoader.Load(path)
 			if err != nil {
 				t.Fatal(err)
 			}
