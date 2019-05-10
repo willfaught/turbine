@@ -115,40 +115,6 @@ func (c *syntaxConv) decls(ss []Syntax) []ast.Decl {
 	return to
 }
 
-func (c *syntaxConv) next(n int) token.Pos {
-	var p = c.end
-	c.end += token.Pos(n)
-	return p
-}
-
-func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
-	var cg *ast.CommentGroup
-	var lastLine bool
-	for _, s := range ss {
-		switch s.(type) {
-		case *Comment:
-			if cg == nil {
-				cg = &ast.CommentGroup{}
-			}
-			cg.List = append(cg.List, c.node(s).(*ast.Comment))
-			lastLine = false
-		case *Line:
-			if lastLine && cg != nil {
-				c.astFile.Comments = append(c.astFile.Comments, cg)
-				cg = nil
-			}
-			c.tokenFile.AddLine(c.tokenFile.Offset(c.end))
-			lastLine = true
-		default:
-			panic(fmt.Sprintf("invalid markup: %#v", s)) // TODO: Remove
-		}
-	}
-	if cg != nil {
-		c.astFile.Comments = append(c.astFile.Comments, cg)
-	}
-	return cg
-}
-
 func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 	switch s := s.(type) {
 	case nil:
@@ -406,6 +372,98 @@ func (c *syntaxConv) idents(from []*Name) []*ast.Ident {
 	return to
 }
 
+func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
+	var cg *ast.CommentGroup
+	var lastLine bool
+	for _, s := range ss {
+		switch s.(type) {
+		case *Comment:
+			if cg == nil {
+				cg = &ast.CommentGroup{}
+			}
+			cg.List = append(cg.List, c.node(s).(*ast.Comment))
+			lastLine = false
+		case *Line:
+			if lastLine && cg != nil {
+				c.astFile.Comments = append(c.astFile.Comments, cg)
+				cg = nil
+			}
+			c.tokenFile.AddLine(c.tokenFile.Offset(c.end))
+			lastLine = true
+		default:
+			panic(fmt.Sprintf("invalid markup: %#v", s)) // TODO: Remove
+		}
+	}
+	if cg != nil {
+		c.astFile.Comments = append(c.astFile.Comments, cg)
+	}
+	return cg
+}
+
+func (c *syntaxConv) next(n int) token.Pos {
+	var p = c.end
+	c.end += token.Pos(n)
+	return p
+}
+
+func (c *syntaxConv) node(s Syntax) ast.Node {
+	switch s := s.(type) {
+	case nil:
+		return nil
+	case *Comment:
+		return &ast.Comment{
+			Text: s.Text,
+		}
+	case *CommentGroup:
+		var cs []*ast.Comment
+		for _, com := range s.List {
+			cs = append(cs, c.node(com).(*ast.Comment))
+		}
+		return &ast.CommentGroup{
+			List: cs,
+		}
+	case *Field:
+		var tag *ast.BasicLit
+		if b, ok := c.expr(s.Tag).(*ast.BasicLit); ok {
+			tag = b
+		}
+		return &ast.Field{
+			Names: c.idents(s.Names),
+			Tag:   tag,
+			Type:  c.expr(s.Type),
+		}
+	case *FieldList:
+		if s == nil {
+			return (*ast.FieldList)(nil)
+		}
+		var fs []*ast.Field
+		for _, f := range s.List {
+			fs = append(fs, c.node(f).(*ast.Field))
+		}
+		return &ast.FieldList{
+			List: fs,
+		}
+	case *File:
+		return &ast.File{
+			Name:  c.expr(s.Name).(*ast.Ident),
+			Decls: c.decls(s.Decls),
+		}
+	case *Package:
+		var fs map[string]*ast.File
+		if s.Files != nil {
+			fs = map[string]*ast.File{}
+			for k, v := range s.Files {
+				fs[k] = c.node(v).(*ast.File)
+			}
+		}
+		return &ast.Package{
+			Files: fs,
+		}
+	default:
+		panic(fmt.Sprintf("invalid node: %#v", s)) // TODO: Remove
+	}
+}
+
 func (c *syntaxConv) skip(n int) {
 	c.end += token.Pos(n)
 }
@@ -604,62 +662,4 @@ func (c *syntaxConv) stmts(from []Syntax) []ast.Stmt {
 		to = append(to, c.stmt(f))
 	}
 	return to
-}
-
-func (c *syntaxConv) node(s Syntax) ast.Node {
-	switch s := s.(type) {
-	case nil:
-		return nil
-	case *Comment:
-		return &ast.Comment{
-			Text: s.Text,
-		}
-	case *CommentGroup:
-		var cs []*ast.Comment
-		for _, com := range s.List {
-			cs = append(cs, c.node(com).(*ast.Comment))
-		}
-		return &ast.CommentGroup{
-			List: cs,
-		}
-	case *Field:
-		var tag *ast.BasicLit
-		if b, ok := c.expr(s.Tag).(*ast.BasicLit); ok {
-			tag = b
-		}
-		return &ast.Field{
-			Names: c.idents(s.Names),
-			Tag:   tag,
-			Type:  c.expr(s.Type),
-		}
-	case *FieldList:
-		if s == nil {
-			return (*ast.FieldList)(nil)
-		}
-		var fs []*ast.Field
-		for _, f := range s.List {
-			fs = append(fs, c.node(f).(*ast.Field))
-		}
-		return &ast.FieldList{
-			List: fs,
-		}
-	case *File:
-		return &ast.File{
-			Name:  c.expr(s.Name).(*ast.Ident),
-			Decls: c.decls(s.Decls),
-		}
-	case *Package:
-		var fs map[string]*ast.File
-		if s.Files != nil {
-			fs = map[string]*ast.File{}
-			for k, v := range s.Files {
-				fs[k] = c.node(v).(*ast.File)
-			}
-		}
-		return &ast.Package{
-			Files: fs,
-		}
-	default:
-		panic(fmt.Sprintf("invalid node: %#v", s)) // TODO: Remove
-	}
 }
