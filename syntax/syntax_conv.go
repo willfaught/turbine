@@ -537,8 +537,7 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 	return to
 }
 
-func (c *syntaxConv) specs(from []Syntax) []ast.Spec {
-	var to []ast.Spec
+func (c *syntaxConv) specs(from []Syntax) (to []ast.Spec) {
 	for _, f := range from {
 		to = append(to, c.spec(f))
 	}
