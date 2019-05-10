@@ -121,10 +121,6 @@ func (c *syntaxConv) next(n int) token.Pos {
 	return p
 }
 
-func (c *syntaxConv) skip(n int) {
-	c.end += token.Pos(n)
-}
-
 func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 	var cg *ast.CommentGroup
 	var lastLine bool
@@ -408,6 +404,10 @@ func (c *syntaxConv) idents(from []*Name) []*ast.Ident {
 		to = append(to, c.expr(f).(*ast.Ident))
 	}
 	return to
+}
+
+func (c *syntaxConv) skip(n int) {
+	c.end += token.Pos(n)
 }
 
 func (c *syntaxConv) spec(s Syntax) (spec ast.Spec) {
