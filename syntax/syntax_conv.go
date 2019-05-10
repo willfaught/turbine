@@ -544,143 +544,186 @@ func (c *syntaxConv) specs(from []Syntax) (to []ast.Spec) {
 	return to
 }
 
-func (c *syntaxConv) stmt(s Syntax) ast.Stmt {
-	switch s := s.(type) {
-	case nil:
-		return nil
+func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
+	switch from := from.(type) {
 	case *Assign:
-		return &ast.AssignStmt{
-			Lhs: c.exprs(s.Left),
-			Rhs: c.exprs(s.Right),
-			Tok: s.Operator,
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs: c.exprs(from.Left),
+			Rhs: c.exprs(from.Right),
+			Tok: from.Operator,
 		}
+		c.markup(from.After)
 	case *Block:
-		if s == nil {
-			return nil
-		}
-		return &ast.BlockStmt{
-			List: c.stmts(s.List),
+		if from != nil {
+			c.markup(from.Before)
+			to = &ast.BlockStmt{
+				List: c.stmts(from.List),
+			}
+			c.markup(from.After)
 		}
 	case *Break:
-		return &ast.BranchStmt{
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
 			Tok:   token.BREAK,
-			Label: ident(c.expr(s.Label)),
+			Label: ident(c.expr(from.Label)),
 		}
+		c.markup(from.After)
 	case *Case:
-		if s.Comm == nil {
-			return &ast.CaseClause{
-				Body: c.stmts(s.Body),
-				List: c.exprs(s.List),
+		if from.Comm == nil {
+			c.markup(from.Before)
+			to = &ast.CaseClause{
+				Body: c.stmts(from.Body),
+				List: c.exprs(from.List),
 			}
-		}
-		return &ast.CommClause{
-			Body: c.stmts(s.Body),
-			Comm: c.stmt(s.Comm),
+			c.markup(from.After)
+		} else {
+			c.markup(from.Before)
+			to = &ast.CommClause{
+				Body: c.stmts(from.Body),
+				Comm: c.stmt(from.Comm),
+			}
+			c.markup(from.After)
 		}
 	case *Continue:
-		return &ast.BranchStmt{
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
 			Tok:   token.CONTINUE,
-			Label: ident(c.expr(s.Label)),
+			Label: ident(c.expr(from.Label)),
 		}
+		c.markup(from.After)
 	case *Fallthrough:
-		return &ast.BranchStmt{
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
 			Tok: token.FALLTHROUGH,
 		}
+		c.markup(from.After)
 	case *Goto:
-		return &ast.BranchStmt{
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
 			Tok:   token.GOTO,
-			Label: ident(c.expr(s.Label)),
+			Label: ident(c.expr(from.Label)),
 		}
+		c.markup(from.After)
 	case *Defer:
-		return &ast.DeferStmt{
-			Call: c.expr(s.Call).(*ast.CallExpr),
+		c.markup(from.Before)
+		to = &ast.DeferStmt{
+			Call: c.expr(from.Call).(*ast.CallExpr),
 		}
+		c.markup(from.After)
 	case *Empty:
-		return &ast.EmptyStmt{}
+		c.markup(from.Before)
+		to = &ast.EmptyStmt{}
+		c.markup(from.After)
 	case *For:
-		return &ast.ForStmt{
-			Init: c.stmt(s.Init),
-			Cond: c.expr(s.Cond),
-			Post: c.stmt(s.Post),
-			Body: c.stmt(s.Body).(*ast.BlockStmt),
+		c.markup(from.Before)
+		to = &ast.ForStmt{
+			Init: c.stmt(from.Init),
+			Cond: c.expr(from.Cond),
+			Post: c.stmt(from.Post),
+			Body: c.stmt(from.Body).(*ast.BlockStmt),
 		}
+		c.markup(from.After)
 	case *Go:
-		return &ast.GoStmt{
-			Call: c.expr(s.Call).(*ast.CallExpr),
+		c.markup(from.Before)
+		to = &ast.GoStmt{
+			Call: c.expr(from.Call).(*ast.CallExpr),
 		}
+		c.markup(from.After)
 	case *If:
-		return &ast.IfStmt{
-			Init: c.stmt(s.Init),
-			Cond: c.expr(s.Cond),
-			Body: c.stmt(s.Body).(*ast.BlockStmt),
-			Else: c.stmt(s.Else),
+		c.markup(from.Before)
+		to = &ast.IfStmt{
+			Init: c.stmt(from.Init),
+			Cond: c.expr(from.Cond),
+			Body: c.stmt(from.Body).(*ast.BlockStmt),
+			Else: c.stmt(from.Else),
 		}
+		c.markup(from.After)
 	case *Inc:
-		return &ast.IncDecStmt{
-			X:   c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.IncDecStmt{
+			X:   c.expr(from.X),
 			Tok: token.INC,
 		}
+		c.markup(from.After)
 	case *Dec:
-		return &ast.IncDecStmt{
-			X:   c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.IncDecStmt{
+			X:   c.expr(from.X),
 			Tok: token.DEC,
 		}
+		c.markup(from.After)
 	case *Label:
-		return &ast.LabeledStmt{
-			Label: c.expr(s.Label).(*ast.Ident),
-			Stmt:  c.stmt(s.Stmt),
+		c.markup(from.Before)
+		to = &ast.LabeledStmt{
+			Label: c.expr(from.Label).(*ast.Ident),
+			Stmt:  c.stmt(from.Stmt),
 		}
+		c.markup(from.After)
 	case *Range:
 		var t = token.DEFINE
-		if s.Assign {
+		if from.Assign {
 			t = token.ASSIGN
 		}
-		return &ast.RangeStmt{
-			Key:   c.expr(s.Key),
-			Value: c.expr(s.Value),
+		c.markup(from.Before)
+		to = &ast.RangeStmt{
+			Key:   c.expr(from.Key),
+			Value: c.expr(from.Value),
 			Tok:   t,
-			X:     c.expr(s.X),
-			Body:  c.stmt(s.Body).(*ast.BlockStmt),
+			X:     c.expr(from.X),
+			Body:  c.stmt(from.Body).(*ast.BlockStmt),
 		}
+		c.markup(from.After)
 	case *Return:
-		return &ast.ReturnStmt{
-			Results: c.exprs(s.Results),
+		c.markup(from.Before)
+		to = &ast.ReturnStmt{
+			Results: c.exprs(from.Results),
 		}
+		c.markup(from.After)
 	case *Select:
-		return &ast.SelectStmt{
-			Body: c.stmt(s.Body).(*ast.BlockStmt),
+		c.markup(from.Before)
+		to = &ast.SelectStmt{
+			Body: c.stmt(from.Body).(*ast.BlockStmt),
 		}
+		c.markup(from.After)
 	case *Send:
-		return &ast.SendStmt{
-			Chan:  c.expr(s.Chan),
-			Value: c.expr(s.Value),
+		c.markup(from.Before)
+		to = &ast.SendStmt{
+			Chan:  c.expr(from.Chan),
+			Value: c.expr(from.Value),
 		}
+		c.markup(from.After)
 	case *Switch:
-		if s.Type == nil {
-			return &ast.SwitchStmt{
-				Body: c.stmt(s.Body).(*ast.BlockStmt),
-				Init: c.stmt(s.Init),
-				Tag:  c.expr(s.Value),
+		if from.Type == nil {
+			c.markup(from.Before)
+			to = &ast.SwitchStmt{
+				Body: c.stmt(from.Body).(*ast.BlockStmt),
+				Init: c.stmt(from.Init),
+				Tag:  c.expr(from.Value),
 			}
-		}
-		return &ast.TypeSwitchStmt{
-			Assign: c.stmt(s.Type),
-			Body:   c.stmt(s.Body).(*ast.BlockStmt),
-			Init:   c.stmt(s.Init),
+			c.markup(from.After)
+		} else {
+			c.markup(from.Before)
+			to = &ast.TypeSwitchStmt{
+				Assign: c.stmt(from.Type),
+				Body:   c.stmt(from.Body).(*ast.BlockStmt),
+				Init:   c.stmt(from.Init),
+			}
+			c.markup(from.After)
 		}
 	default:
-		if d := c.decl(s); d != nil {
-			return &ast.DeclStmt{
+		if d := c.decl(from); d != nil {
+			to = &ast.DeclStmt{
 				Decl: d,
 			}
 		}
-		if e := c.expr(s); e != nil {
-			return &ast.ExprStmt{
+		if e := c.expr(from); e != nil {
+			to = &ast.ExprStmt{
 				X: e,
 			}
 		}
-		panic(fmt.Sprintf("invalid statement: %#v", s)) // TODO: Remove
 	}
+	return to
 }
 
 func (c *syntaxConv) stmts(from []Syntax) (to []ast.Stmt) {
