@@ -7,13 +7,19 @@ import (
 )
 
 var (
+	lenArrow     = len(token.ARROW.String())
 	lenChan      = len(token.CHAN.String())
+	lenColon     = len(token.COLON.String())
+	lenEllipsis  = len(token.ELLIPSIS.String())
 	lenFunc      = len(token.FUNC.String())
 	lenInterface = len(token.INTERFACE.String())
+	lenLbrace    = len(token.LBRACE.String())
 	lenLbrack    = len(token.LBRACK.String())
 	lenLparen    = len(token.LPAREN.String())
+	lenMap       = len(token.MAP.String())
 	lenMul       = len(token.MUL.String())
 	lenPeriod    = len(token.PERIOD.String())
+	lenRbrace    = len(token.RBRACE.String())
 	lenRbrack    = len(token.RBRACK.String())
 	lenRparen    = len(token.RPAREN.String())
 	lenStruct    = len(token.STRUCT.String())
@@ -193,25 +199,25 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 	case *Chan:
 		c.markup(s.Before)
 		e = &ast.ChanType{
-			Begin: c.next(1),
+			Begin: c.next(lenChan + 1),
 			Value: c.expr(s.Value),
 		}
 		c.markup(s.After)
 	case *ChanIn:
 		c.markup(s.Before)
-		var p = c.next(1)
 		e = &ast.ChanType{
-			Begin: p,
-			Arrow: p,
+			Begin: c.next(lenChan),
+			Arrow: c.next(lenArrow + 1),
 			Dir:   ast.RECV,
 			Value: c.expr(s.Value),
 		}
 		c.markup(s.After)
 	case *ChanOut:
 		c.markup(s.Before)
+		var p = c.next(lenChan + lenArrow + 1)
 		e = &ast.ChanType{
-			Begin: c.next(lenChan),
-			Arrow: c.next(1),
+			Begin: p,
+			Arrow: p,
 			Dir:   ast.SEND,
 			Value: c.expr(s.Value),
 		}
@@ -220,15 +226,15 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 		c.markup(s.Before)
 		e = &ast.CompositeLit{
 			Type:   c.expr(s.Type),
-			Lbrace: c.next(1),
+			Lbrace: c.next(lenLbrace),
 			Elts:   c.exprs(s.Elts),
-			Rbrace: c.next(1),
+			Rbrace: c.next(lenRbrace),
 		}
 		c.markup(s.After)
 	case *Ellipsis:
 		c.markup(s.Before)
 		e = &ast.Ellipsis{
-			Ellipsis: c.next(1),
+			Ellipsis: c.next(lenEllipsis),
 			Elt:      c.expr(s.Elt),
 		}
 		c.markup(s.After)
@@ -262,9 +268,9 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 		c.markup(s.Before)
 		e = &ast.IndexExpr{
 			X:      c.expr(s.X),
-			Lbrack: c.next(1),
+			Lbrack: c.next(lenLbrack),
 			Index:  c.expr(s.Index),
-			Rbrack: c.next(1),
+			Rbrack: c.next(lenRbrack),
 		}
 		c.markup(s.After)
 	case *Interface:
@@ -278,14 +284,14 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 		c.markup(s.Before)
 		e = &ast.KeyValueExpr{
 			Key:   c.expr(s.Key),
-			Colon: c.next(1),
+			Colon: c.next(lenColon),
 			Value: c.expr(s.Value),
 		}
 		c.markup(s.After)
 	case *Map:
 		c.markup(s.Before)
 		e = &ast.MapType{
-			Map:   c.next(1),
+			Map:   c.next(lenMap),
 			Key:   c.expr(s.Key),
 			Value: c.expr(s.Value),
 		}
@@ -293,9 +299,9 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 	case *Paren:
 		c.markup(s.Before)
 		e = &ast.ParenExpr{
-			Lparen: c.next(1),
+			Lparen: c.next(lenLparen),
 			X:      c.expr(s.X),
-			Rparen: c.next(1),
+			Rparen: c.next(lenRparen),
 		}
 		c.markup(s.After)
 	case *Selector:
@@ -310,12 +316,12 @@ func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 		c.markup(s.Before)
 		e = &ast.SliceExpr{
 			X:      c.expr(s.X),
-			Lbrack: c.next(1),
+			Lbrack: c.next(lenLbrack),
 			Low:    c.expr(s.Low),
 			High:   c.expr(s.High),
 			Max:    c.expr(s.Max),
 			Slice3: false, // TODO
-			Rbrack: c.next(1),
+			Rbrack: c.next(lenRbrack),
 		}
 		c.markup(s.After)
 	case *Struct:
