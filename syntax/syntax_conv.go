@@ -390,7 +390,7 @@ func (c *syntaxConv) idents(from []*Name) []*ast.Ident {
 	return to
 }
 
-func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
+func (c *syntaxConv) markup(ss []Syntax) {
 	var cg *ast.CommentGroup
 	var lastLine bool
 	for _, s := range ss {
@@ -415,7 +415,6 @@ func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 	if cg != nil {
 		c.astFile.Comments = append(c.astFile.Comments, cg)
 	}
-	return cg
 }
 
 func (c *syntaxConv) next(n int) token.Pos {
