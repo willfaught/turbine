@@ -443,7 +443,8 @@ func (c *syntaxConv) node(s Syntax) ast.Node {
 		return nil
 	case *Comment:
 		return &ast.Comment{
-			Text: s.Text,
+			Slash: c.next(len(s.Text)), // TODO: Insert new line?
+			Text:  s.Text,
 		}
 	case *CommentGroup:
 		var cs []*ast.Comment
