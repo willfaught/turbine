@@ -384,16 +384,14 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 	return to
 }
 
-func (c *syntaxConv) exprs(from []Syntax) []ast.Expr {
-	var to []ast.Expr
+func (c *syntaxConv) exprs(from []Syntax) (to []ast.Expr) {
 	for _, f := range from {
 		to = append(to, c.expr(f))
 	}
 	return to
 }
 
-func (c *syntaxConv) idents(from []*Name) []*ast.Ident {
-	var to []*ast.Ident
+func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 	for _, f := range from {
 		to = append(to, c.expr(f).(*ast.Ident))
 	}
