@@ -72,76 +72,10 @@ func (u *Unary) Node() ast.Node        { return convertSyntax(u) }
 func (v *Var) Node() ast.Node          { return convertSyntax(v) }
 func (v *VarList) Node() ast.Node      { return convertSyntax(v) }
 
-type Markup struct {
-	Before, After []Syntax
-}
-
-type Line struct{}
-
-type Name struct {
+type Array struct {
 	Markup
-	Text string
-}
-
-type Ellipsis struct {
-	Markup
-	Elt Syntax
-}
-
-type Int struct {
-	Markup
-	Text string
-}
-
-type Float struct {
-	Markup
-	Text string
-}
-
-type Imag struct {
-	Markup
-	Text string
-}
-
-type Rune struct {
-	Markup
-	Text string
-}
-
-type String struct {
-	Markup
-	Text string
-}
-
-type Composite struct {
-	Markup
-	Type Syntax
-	Elts []Syntax
-}
-
-type Paren struct {
-	Markup
-	X Syntax
-}
-
-type Selector struct {
-	Markup
-	X   Syntax
-	Sel *Name
-}
-
-type Index struct {
-	Markup
-	X     Syntax
-	Index Syntax
-}
-
-type Slice struct {
-	Markup
-	X    Syntax
-	Low  Syntax
-	High Syntax
-	Max  Syntax
+	Length  Syntax
+	Element Syntax
 }
 
 type Assert struct {
@@ -150,17 +84,11 @@ type Assert struct {
 	Type Syntax
 }
 
-type Call struct {
+type Assign struct {
 	Markup
-	Fun      Syntax
-	Args     []Syntax
-	Ellipsis bool
-}
-
-type Unary struct {
-	Markup
+	Left     []Syntax
 	Operator token.Token
-	X        Syntax
+	Right    []Syntax
 }
 
 type Binary struct {
@@ -170,41 +98,28 @@ type Binary struct {
 	Y        Syntax
 }
 
-type KeyValue struct {
+type Block struct {
 	Markup
-	Key   Syntax
-	Value Syntax
+	List []Syntax
 }
 
-type Array struct {
+type Break struct {
 	Markup
-	Length  Syntax
-	Element Syntax
+	Label *Name
 }
 
-type Struct struct {
+type Call struct {
 	Markup
-	Fields *FieldList
+	Fun      Syntax
+	Args     []Syntax
+	Ellipsis bool
 }
 
-type Func struct {
+type Case struct {
 	Markup
-	Receiver   *FieldList
-	Name       *Name
-	Parameters *FieldList
-	Results    *FieldList
-	Body       *Block
-}
-
-type Interface struct {
-	Markup
-	Methods *FieldList
-}
-
-type Map struct {
-	Markup
-	Key   Syntax
-	Value Syntax
+	Comm Syntax
+	List []Syntax
+	Body []Syntax
 }
 
 type Chan struct {
@@ -222,127 +137,18 @@ type ChanOut struct {
 	Value Syntax
 }
 
-type Empty struct {
-	Markup
-	// TODO: Implicit  bool
+type Comment struct {
+	Text string
 }
 
-type Label struct {
-	Markup
-	Label *Name
-	Stmt  Syntax
+type CommentGroup struct {
+	List []*Comment
 }
 
-type Send struct {
+type Composite struct {
 	Markup
-	Chan  Syntax
-	Value Syntax
-}
-
-type Inc struct {
-	Markup
-	X Syntax
-}
-
-type Dec struct {
-	Markup
-	X Syntax
-}
-
-type Assign struct {
-	Markup
-	Left     []Syntax
-	Operator token.Token
-	Right    []Syntax
-}
-
-type Go struct {
-	Markup
-	Call *Call
-}
-
-type Defer struct {
-	Markup
-	Call *Call
-}
-
-type Return struct {
-	Markup
-	Results []Syntax
-}
-
-type Break struct {
-	Markup
-	Label *Name
-}
-
-type Continue struct {
-	Markup
-	Label *Name
-}
-
-type Goto struct {
-	Markup
-	Label *Name
-}
-
-type Fallthrough struct {
-	Markup
-}
-
-type Block struct {
-	Markup
-	List []Syntax
-}
-
-type If struct {
-	Markup
-	Init Syntax
-	Cond Syntax
-	Body *Block
-	Else Syntax
-}
-
-type Case struct {
-	Markup
-	Comm Syntax
-	List []Syntax
-	Body []Syntax
-}
-
-type Switch struct {
-	Markup
-	Body  *Block
-	Init  Syntax
-	Type  Syntax
-	Value Syntax
-}
-
-type Select struct {
-	Markup
-	Body *Block
-}
-
-type For struct {
-	Markup
-	Init Syntax
-	Cond Syntax
-	Post Syntax
-	Body *Block
-}
-
-type Range struct {
-	Markup
-	Assign     bool
-	Key, Value Syntax
-	X          Syntax
-	Body       *Block
-}
-
-type Import struct {
-	Markup
-	Name *Name
-	Path *String
+	Type Syntax
+	Elts []Syntax
 }
 
 type Const struct {
@@ -352,48 +158,38 @@ type Const struct {
 	Values []Syntax
 }
 
-type Var struct {
-	Markup
-	Names  []*Name
-	Type   Syntax
-	Values []Syntax
-}
-
-type Type struct {
-	Markup
-	Name   *Name
-	Assign token.Pos
-	Type   Syntax
-}
-
-type VarList struct {
-	Markup
-	List []Syntax
-}
-
 type ConstList struct {
 	Markup
 	List []Syntax
 }
 
-type TypeList struct {
+type Continue struct {
 	Markup
-	List []Syntax
+	Label *Name
 }
 
-type ImportList struct {
+type Dec struct {
 	Markup
-	List []Syntax
+	X Syntax
 }
 
-type File struct {
+type Defer struct {
 	Markup
-	Name  *Name
-	Decls []Syntax
+	Call *Call
 }
 
-type Package struct {
-	Files map[string]*File
+type Ellipsis struct {
+	Markup
+	Elt Syntax
+}
+
+type Empty struct {
+	Markup
+	// TODO: Implicit  bool
+}
+
+type Fallthrough struct {
+	Markup
 }
 
 type Field struct {
@@ -408,10 +204,214 @@ type FieldList struct {
 	List []*Field
 }
 
-type Comment struct {
+type File struct {
+	Markup
+	Name  *Name
+	Decls []Syntax
+}
+
+type Float struct {
+	Markup
 	Text string
 }
 
-type CommentGroup struct {
-	List []*Comment
+type For struct {
+	Markup
+	Init Syntax
+	Cond Syntax
+	Post Syntax
+	Body *Block
+}
+
+type Func struct {
+	Markup
+	Receiver   *FieldList
+	Name       *Name
+	Parameters *FieldList
+	Results    *FieldList
+	Body       *Block
+}
+
+type If struct {
+	Markup
+	Init Syntax
+	Cond Syntax
+	Body *Block
+	Else Syntax
+}
+
+type Import struct {
+	Markup
+	Name *Name
+	Path *String
+}
+
+type Go struct {
+	Markup
+	Call *Call
+}
+
+type Goto struct {
+	Markup
+	Label *Name
+}
+
+type Imag struct {
+	Markup
+	Text string
+}
+
+type ImportList struct {
+	Markup
+	List []Syntax
+}
+
+type Inc struct {
+	Markup
+	X Syntax
+}
+
+type Index struct {
+	Markup
+	X     Syntax
+	Index Syntax
+}
+
+type Int struct {
+	Markup
+	Text string
+}
+
+type Interface struct {
+	Markup
+	Methods *FieldList
+}
+
+type KeyValue struct {
+	Markup
+	Key   Syntax
+	Value Syntax
+}
+
+type Label struct {
+	Markup
+	Label *Name
+	Stmt  Syntax
+}
+
+type Line struct{}
+
+type Map struct {
+	Markup
+	Key   Syntax
+	Value Syntax
+}
+
+type Markup struct {
+	Before, After []Syntax
+}
+
+type Name struct {
+	Markup
+	Text string
+}
+
+type Package struct {
+	Files map[string]*File
+}
+
+type Paren struct {
+	Markup
+	X Syntax
+}
+
+type Range struct {
+	Markup
+	Assign     bool
+	Key, Value Syntax
+	X          Syntax
+	Body       *Block
+}
+
+type Return struct {
+	Markup
+	Results []Syntax
+}
+
+type Rune struct {
+	Markup
+	Text string
+}
+
+type Select struct {
+	Markup
+	Body *Block
+}
+
+type Selector struct {
+	Markup
+	X   Syntax
+	Sel *Name
+}
+
+type Send struct {
+	Markup
+	Chan  Syntax
+	Value Syntax
+}
+
+type Slice struct {
+	Markup
+	X    Syntax
+	Low  Syntax
+	High Syntax
+	Max  Syntax
+}
+
+type String struct {
+	Markup
+	Text string
+}
+
+type Struct struct {
+	Markup
+	Fields *FieldList
+}
+
+type Switch struct {
+	Markup
+	Body  *Block
+	Init  Syntax
+	Type  Syntax
+	Value Syntax
+}
+
+type Type struct {
+	Markup
+	Name   *Name
+	Assign token.Pos
+	Type   Syntax
+}
+
+type TypeList struct {
+	Markup
+	List []Syntax
+}
+
+type Unary struct {
+	Markup
+	Operator token.Token
+	X        Syntax
+}
+
+type Var struct {
+	Markup
+	Names  []*Name
+	Type   Syntax
+	Values []Syntax
+}
+
+type VarList struct {
+	Markup
+	List []Syntax
 }
