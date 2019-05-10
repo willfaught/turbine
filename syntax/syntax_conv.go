@@ -6,6 +6,18 @@ import (
 	"go/token"
 )
 
+var (
+	lenChan      = len(token.CHAN.String())
+	lenFunc      = len(token.FUNC.String())
+	lenInterface = len(token.INTERFACE.String())
+	lenLparen    = len(token.LPAREN.String())
+	lenMul       = len(token.MUL.String())
+	lenPeriod    = len(token.PERIOD.String())
+	lenRbrack    = len(token.RBRACK.String())
+	lenRparen    = len(token.RPAREN.String())
+	lenStruct    = len(token.STRUCT.String())
+)
+
 func ident(e ast.Expr) *ast.Ident {
 	if e == nil {
 		return nil
@@ -148,18 +160,6 @@ func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 	}
 	return cg
 }
-
-var (
-	lenChan      = len(token.CHAN.String())
-	lenFunc      = len(token.FUNC.String())
-	lenInterface = len(token.INTERFACE.String())
-	lenLparen    = len(token.LPAREN.String())
-	lenMul       = len(token.MUL.String())
-	lenPeriod    = len(token.PERIOD.String())
-	lenRbrack    = len(token.RBRACK.String())
-	lenRparen    = len(token.RPAREN.String())
-	lenStruct    = len(token.STRUCT.String())
-)
 
 func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
 	switch s := s.(type) {
