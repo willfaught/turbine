@@ -399,6 +399,9 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 }
 
 func (c *syntaxConv) markup(ss []Syntax) {
+	if c.astFile == nil || c.tokenFile == nil {
+		return
+	}
 	var cg *ast.CommentGroup
 	var lastLine bool
 	for _, s := range ss {
@@ -471,10 +474,14 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			}
 		}
 	case *File:
-		to = &ast.File{
-			Name:  c.expr(from.Name).(*ast.Ident),
-			Decls: c.decls(from.Decls),
+		if c.tokenFileSet == nil {
+			c.tokenFileSet = token.NewFileSet()
 		}
+		c.astFile = &ast.File{}
+		c.astFile.Name = c.expr(from.Name).(*ast.Ident)
+		c.astFile.Decls = c.decls(from.Decls)
+		c.tokenFile = c.tokenFileSet.AddFile("", -1, 999999999) // TODO
+		to = c.astFile
 	case *Package:
 		var fs map[string]*ast.File
 		if from.Files != nil {
