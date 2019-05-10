@@ -592,17 +592,11 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Label: ident(c.expr(from.Label)),
 		}
 		c.markup(from.After)
-	case *Fallthrough:
+	case *Dec:
 		c.markup(from.Before)
-		to = &ast.BranchStmt{
-			Tok: token.FALLTHROUGH,
-		}
-		c.markup(from.After)
-	case *Goto:
-		c.markup(from.Before)
-		to = &ast.BranchStmt{
-			Tok:   token.GOTO,
-			Label: ident(c.expr(from.Label)),
+		to = &ast.IncDecStmt{
+			X:   c.expr(from.X),
+			Tok: token.DEC,
 		}
 		c.markup(from.After)
 	case *Defer:
@@ -614,6 +608,12 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	case *Empty:
 		c.markup(from.Before)
 		to = &ast.EmptyStmt{}
+		c.markup(from.After)
+	case *Fallthrough:
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
+			Tok: token.FALLTHROUGH,
+		}
 		c.markup(from.After)
 	case *For:
 		c.markup(from.Before)
@@ -630,6 +630,13 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Call: c.expr(from.Call).(*ast.CallExpr),
 		}
 		c.markup(from.After)
+	case *Goto:
+		c.markup(from.Before)
+		to = &ast.BranchStmt{
+			Tok:   token.GOTO,
+			Label: ident(c.expr(from.Label)),
+		}
+		c.markup(from.After)
 	case *If:
 		c.markup(from.Before)
 		to = &ast.IfStmt{
@@ -644,13 +651,6 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		to = &ast.IncDecStmt{
 			X:   c.expr(from.X),
 			Tok: token.INC,
-		}
-		c.markup(from.After)
-	case *Dec:
-		c.markup(from.Before)
-		to = &ast.IncDecStmt{
-			X:   c.expr(from.X),
-			Tok: token.DEC,
 		}
 		c.markup(from.After)
 	case *Label:
