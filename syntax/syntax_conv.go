@@ -406,7 +406,7 @@ func (c *syntaxConv) markup(ss []Syntax) *ast.CommentGroup {
 				c.astFile.Comments = append(c.astFile.Comments, cg)
 				cg = nil
 			}
-			c.tokenFile.AddLine(c.tokenFile.Offset(c.end))
+			c.tokenFile.AddLine(c.tokenFile.Offset(c.next(1)))
 			lastLine = true
 		default:
 			panic(fmt.Sprintf("invalid markup: %#v", s)) // TODO: Remove
