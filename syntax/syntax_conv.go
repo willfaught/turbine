@@ -147,245 +147,241 @@ func (c *syntaxConv) decls(from []Syntax) (to []ast.Decl) {
 	return to
 }
 
-func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
-	switch s := s.(type) {
-	case nil:
-		return nil
+func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
+	switch from := from.(type) {
 	case *Array:
-		c.markup(s.Before)
-		e = &ast.ArrayType{
+		c.markup(from.Before)
+		to = &ast.ArrayType{
 			Lbrack: c.next(lenLbrack),
-			Len:    c.expr(s.Length),
+			Len:    c.expr(from.Length),
 		}
 		c.skip(lenRbrack)
-		e.(*ast.ArrayType).Elt = c.expr(s.Element)
-		c.markup(s.After)
+		to.(*ast.ArrayType).Elt = c.expr(from.Element)
+		c.markup(from.After)
 	case *Float:
-		c.markup(s.Before)
-		e = &ast.BasicLit{
-			ValuePos: c.next(len(s.Text)),
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
 			Kind:     token.FLOAT,
-			Value:    s.Text,
+			Value:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Imag:
-		c.markup(s.Before)
-		e = &ast.BasicLit{
-			ValuePos: c.next(len(s.Text)),
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
 			Kind:     token.IMAG,
-			Value:    s.Text,
+			Value:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Int:
-		c.markup(s.Before)
-		e = &ast.BasicLit{
-			ValuePos: c.next(len(s.Text)),
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
 			Kind:     token.INT,
-			Value:    s.Text,
+			Value:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Rune:
-		c.markup(s.Before)
-		e = &ast.BasicLit{
-			ValuePos: c.next(len(s.Text)),
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
 			Kind:     token.CHAR,
-			Value:    s.Text,
+			Value:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *String:
-		if s == nil {
+		if from == nil {
 			return nil
 		}
-		c.markup(s.Before)
-		e = &ast.BasicLit{
-			ValuePos: c.next(len(s.Text)),
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
 			Kind:     token.STRING,
-			Value:    s.Text,
+			Value:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Binary:
-		c.markup(s.Before)
-		e = &ast.BinaryExpr{
-			X:     c.expr(s.X),
-			OpPos: c.next(len(s.Operator.String())),
-			Op:    s.Operator,
-			Y:     c.expr(s.Y),
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(len(from.Operator.String())),
+			Op:    from.Operator,
+			Y:     c.expr(from.Y),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Call:
-		c.markup(s.Before)
-		e = &ast.CallExpr{
-			Fun:      c.expr(s.Fun),
+		c.markup(from.Before)
+		to = &ast.CallExpr{
+			Fun:      c.expr(from.Fun),
 			Lparen:   c.next(lenLparen),
-			Args:     c.exprs(s.Args),
+			Args:     c.exprs(from.Args),
 			Ellipsis: 0, // TODO
 			Rparen:   c.next(lenRparen),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Chan:
-		c.markup(s.Before)
-		e = &ast.ChanType{
+		c.markup(from.Before)
+		to = &ast.ChanType{
 			Begin: c.next(lenChan + 1),
-			Value: c.expr(s.Value),
+			Value: c.expr(from.Value),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *ChanIn:
-		c.markup(s.Before)
-		e = &ast.ChanType{
+		c.markup(from.Before)
+		to = &ast.ChanType{
 			Begin: c.next(lenChan),
 			Arrow: c.next(lenArrow + 1),
 			Dir:   ast.RECV,
-			Value: c.expr(s.Value),
+			Value: c.expr(from.Value),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *ChanOut:
-		c.markup(s.Before)
+		c.markup(from.Before)
 		var p = c.next(lenChan + lenArrow + 1)
-		e = &ast.ChanType{
+		to = &ast.ChanType{
 			Begin: p,
 			Arrow: p,
 			Dir:   ast.SEND,
-			Value: c.expr(s.Value),
+			Value: c.expr(from.Value),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Composite:
-		c.markup(s.Before)
-		e = &ast.CompositeLit{
-			Type:   c.expr(s.Type),
+		c.markup(from.Before)
+		to = &ast.CompositeLit{
+			Type:   c.expr(from.Type),
 			Lbrace: c.next(lenLbrace),
-			Elts:   c.exprs(s.Elts),
+			Elts:   c.exprs(from.Elts),
 			Rbrace: c.next(lenRbrace),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Ellipsis:
-		c.markup(s.Before)
-		e = &ast.Ellipsis{
+		c.markup(from.Before)
+		to = &ast.Ellipsis{
 			Ellipsis: c.next(lenEllipsis),
-			Elt:      c.expr(s.Elt),
+			Elt:      c.expr(from.Elt),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Func:
-		c.markup(s.Before)
+		c.markup(from.Before)
 		var t = &ast.FuncType{
 			Func:    c.next(lenFunc),
-			Params:  c.node(s.Parameters).(*ast.FieldList),
-			Results: c.node(s.Results).(*ast.FieldList),
+			Params:  c.node(from.Parameters).(*ast.FieldList),
+			Results: c.node(from.Results).(*ast.FieldList),
 		}
-		if s.Body == nil {
-			e = t
+		if from.Body == nil {
+			to = t
 		} else {
-			e = &ast.FuncLit{
+			to = &ast.FuncLit{
 				Type: t,
-				Body: c.stmt(s.Body).(*ast.BlockStmt),
+				Body: c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Name:
-		if s == nil {
+		if from == nil {
 			return nil
 		}
-		c.markup(s.Before)
-		e = &ast.Ident{
-			NamePos: c.next(len(s.Text)),
-			Name:    s.Text,
+		c.markup(from.Before)
+		to = &ast.Ident{
+			NamePos: c.next(len(from.Text)),
+			Name:    from.Text,
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Index:
-		c.markup(s.Before)
-		e = &ast.IndexExpr{
-			X:      c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.IndexExpr{
+			X:      c.expr(from.X),
 			Lbrack: c.next(lenLbrack),
-			Index:  c.expr(s.Index),
+			Index:  c.expr(from.Index),
 			Rbrack: c.next(lenRbrack),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Interface:
-		c.markup(s.Before)
-		e = &ast.InterfaceType{
+		c.markup(from.Before)
+		to = &ast.InterfaceType{
 			Interface: c.next(lenInterface),
-			Methods:   c.node(s.Methods).(*ast.FieldList),
+			Methods:   c.node(from.Methods).(*ast.FieldList),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *KeyValue:
-		c.markup(s.Before)
-		e = &ast.KeyValueExpr{
-			Key:   c.expr(s.Key),
+		c.markup(from.Before)
+		to = &ast.KeyValueExpr{
+			Key:   c.expr(from.Key),
 			Colon: c.next(lenColon),
-			Value: c.expr(s.Value),
+			Value: c.expr(from.Value),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Map:
-		c.markup(s.Before)
-		e = &ast.MapType{
+		c.markup(from.Before)
+		to = &ast.MapType{
 			Map:   c.next(lenMap),
-			Key:   c.expr(s.Key),
-			Value: c.expr(s.Value),
+			Key:   c.expr(from.Key),
+			Value: c.expr(from.Value),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Paren:
-		c.markup(s.Before)
-		e = &ast.ParenExpr{
+		c.markup(from.Before)
+		to = &ast.ParenExpr{
 			Lparen: c.next(lenLparen),
-			X:      c.expr(s.X),
+			X:      c.expr(from.X),
 			Rparen: c.next(lenRparen),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Selector:
-		c.markup(s.Before)
-		e = &ast.SelectorExpr{
-			X: c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.SelectorExpr{
+			X: c.expr(from.X),
 		}
 		c.skip(lenPeriod)
-		e.(*ast.SelectorExpr).Sel = c.expr(s.Sel).(*ast.Ident)
-		c.markup(s.After)
+		to.(*ast.SelectorExpr).Sel = c.expr(from.Sel).(*ast.Ident)
+		c.markup(from.After)
 	case *Slice:
-		c.markup(s.Before)
-		e = &ast.SliceExpr{
-			X:      c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.SliceExpr{
+			X:      c.expr(from.X),
 			Lbrack: c.next(lenLbrack),
-			Low:    c.expr(s.Low),
-			High:   c.expr(s.High),
-			Max:    c.expr(s.Max),
+			Low:    c.expr(from.Low),
+			High:   c.expr(from.High),
+			Max:    c.expr(from.Max),
 			Slice3: false, // TODO
 			Rbrack: c.next(lenRbrack),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Struct:
-		c.markup(s.Before)
-		e = &ast.StructType{
+		c.markup(from.Before)
+		to = &ast.StructType{
 			Struct:     c.next(lenStruct),
-			Fields:     c.node(s.Fields).(*ast.FieldList),
+			Fields:     c.node(from.Fields).(*ast.FieldList),
 			Incomplete: false, // TODO
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Assert:
-		c.markup(s.Before)
-		e = &ast.TypeAssertExpr{
-			X:      c.expr(s.X),
+		c.markup(from.Before)
+		to = &ast.TypeAssertExpr{
+			X:      c.expr(from.X),
 			Lparen: c.next(lenLparen),
-			Type:   c.expr(s.Type),
+			Type:   c.expr(from.Type),
 			Rparen: c.next(lenRparen),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Unary:
-		c.markup(s.Before)
-		if s.Operator == token.MUL {
-			e = &ast.StarExpr{
+		c.markup(from.Before)
+		if from.Operator == token.MUL {
+			to = &ast.StarExpr{
 				Star: c.next(lenMul),
-				X:    c.expr(s.X),
+				X:    c.expr(from.X),
 			}
 		} else {
-			e = &ast.UnaryExpr{
-				OpPos: c.next(len(s.Operator.String())),
-				Op:    s.Operator,
-				X:     c.expr(s.X),
+			to = &ast.UnaryExpr{
+				OpPos: c.next(len(from.Operator.String())),
+				Op:    from.Operator,
+				X:     c.expr(from.X),
 			}
 		}
-		c.markup(s.After)
-	default:
-		panic(fmt.Sprintf("invalid expression: %#v", s)) // TODO: Remove
+		c.markup(from.After)
 	}
-	return e
+	return to
 }
 
 func (c *syntaxConv) exprs(from []Syntax) []ast.Expr {
