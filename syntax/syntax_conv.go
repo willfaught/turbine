@@ -683,8 +683,7 @@ func (c *syntaxConv) stmt(s Syntax) ast.Stmt {
 	}
 }
 
-func (c *syntaxConv) stmts(from []Syntax) []ast.Stmt {
-	var to []ast.Stmt
+func (c *syntaxConv) stmts(from []Syntax) (to []ast.Stmt) {
 	for _, f := range from {
 		to = append(to, c.stmt(f))
 	}
