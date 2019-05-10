@@ -18,18 +18,18 @@ var (
 	lenStruct    = len(token.STRUCT.String())
 )
 
-func ident(e ast.Expr) *ast.Ident {
-	if e == nil {
-		return nil
-	}
-	return e.(*ast.Ident)
-}
-
 func blockStmt(s ast.Stmt) *ast.BlockStmt {
 	if s == nil {
 		return nil
 	}
 	return s.(*ast.BlockStmt)
+}
+
+func ident(e ast.Expr) *ast.Ident {
+	if e == nil {
+		return nil
+	}
+	return e.(*ast.Ident)
 }
 
 type syntaxConv struct {
