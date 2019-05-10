@@ -158,47 +158,13 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.skip(lenRbrack)
 		to.(*ast.ArrayType).Elt = c.expr(from.Element)
 		c.markup(from.After)
-	case *Float:
+	case *Assert:
 		c.markup(from.Before)
-		to = &ast.BasicLit{
-			ValuePos: c.next(len(from.Text)),
-			Kind:     token.FLOAT,
-			Value:    from.Text,
-		}
-		c.markup(from.After)
-	case *Imag:
-		c.markup(from.Before)
-		to = &ast.BasicLit{
-			ValuePos: c.next(len(from.Text)),
-			Kind:     token.IMAG,
-			Value:    from.Text,
-		}
-		c.markup(from.After)
-	case *Int:
-		c.markup(from.Before)
-		to = &ast.BasicLit{
-			ValuePos: c.next(len(from.Text)),
-			Kind:     token.INT,
-			Value:    from.Text,
-		}
-		c.markup(from.After)
-	case *Rune:
-		c.markup(from.Before)
-		to = &ast.BasicLit{
-			ValuePos: c.next(len(from.Text)),
-			Kind:     token.CHAR,
-			Value:    from.Text,
-		}
-		c.markup(from.After)
-	case *String:
-		if from == nil {
-			return nil
-		}
-		c.markup(from.Before)
-		to = &ast.BasicLit{
-			ValuePos: c.next(len(from.Text)),
-			Kind:     token.STRING,
-			Value:    from.Text,
+		to = &ast.TypeAssertExpr{
+			X:      c.expr(from.X),
+			Lparen: c.next(lenLparen),
+			Type:   c.expr(from.Type),
+			Rparen: c.next(lenRparen),
 		}
 		c.markup(from.After)
 	case *Binary:
@@ -262,6 +228,14 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Elt:      c.expr(from.Elt),
 		}
 		c.markup(from.After)
+	case *Float:
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
+			Kind:     token.FLOAT,
+			Value:    from.Text,
+		}
+		c.markup(from.After)
 	case *Func:
 		c.markup(from.Before)
 		var t = &ast.FuncType{
@@ -278,14 +252,12 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			}
 		}
 		c.markup(from.After)
-	case *Name:
-		if from == nil {
-			return nil
-		}
+	case *Imag:
 		c.markup(from.Before)
-		to = &ast.Ident{
-			NamePos: c.next(len(from.Text)),
-			Name:    from.Text,
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
+			Kind:     token.IMAG,
+			Value:    from.Text,
 		}
 		c.markup(from.After)
 	case *Index:
@@ -295,6 +267,14 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Lbrack: c.next(lenLbrack),
 			Index:  c.expr(from.Index),
 			Rbrack: c.next(lenRbrack),
+		}
+		c.markup(from.After)
+	case *Int:
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
+			Kind:     token.INT,
+			Value:    from.Text,
 		}
 		c.markup(from.After)
 	case *Interface:
@@ -320,12 +300,30 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
+	case *Name:
+		if from == nil {
+			return nil
+		}
+		c.markup(from.Before)
+		to = &ast.Ident{
+			NamePos: c.next(len(from.Text)),
+			Name:    from.Text,
+		}
+		c.markup(from.After)
 	case *Paren:
 		c.markup(from.Before)
 		to = &ast.ParenExpr{
 			Lparen: c.next(lenLparen),
 			X:      c.expr(from.X),
 			Rparen: c.next(lenRparen),
+		}
+		c.markup(from.After)
+	case *Rune:
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
+			Kind:     token.CHAR,
+			Value:    from.Text,
 		}
 		c.markup(from.After)
 	case *Selector:
@@ -348,21 +346,23 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Rbrack: c.next(lenRbrack),
 		}
 		c.markup(from.After)
+	case *String:
+		if from == nil {
+			return nil
+		}
+		c.markup(from.Before)
+		to = &ast.BasicLit{
+			ValuePos: c.next(len(from.Text)),
+			Kind:     token.STRING,
+			Value:    from.Text,
+		}
+		c.markup(from.After)
 	case *Struct:
 		c.markup(from.Before)
 		to = &ast.StructType{
 			Struct:     c.next(lenStruct),
 			Fields:     c.node(from.Fields).(*ast.FieldList),
 			Incomplete: false, // TODO
-		}
-		c.markup(from.After)
-	case *Assert:
-		c.markup(from.Before)
-		to = &ast.TypeAssertExpr{
-			X:      c.expr(from.X),
-			Lparen: c.next(lenLparen),
-			Type:   c.expr(from.Type),
-			Rparen: c.next(lenRparen),
 		}
 		c.markup(from.After)
 	case *Unary:
