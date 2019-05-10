@@ -240,12 +240,6 @@ type If struct {
 	Else Syntax
 }
 
-type Import struct {
-	Markup
-	Name *Name
-	Path *String
-}
-
 type Go struct {
 	Markup
 	Call *Call
@@ -259,6 +253,12 @@ type Goto struct {
 type Imag struct {
 	Markup
 	Text string
+}
+
+type Import struct {
+	Markup
+	Name *Name
+	Path *String
 }
 
 type ImportList struct {
