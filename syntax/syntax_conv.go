@@ -21,8 +21,8 @@ func maybeBlockStmt(s ast.Stmt) *ast.BlockStmt {
 }
 
 type syntaxConv struct {
-	end          token.Pos
 	astFile      *ast.File
+	end          token.Pos
 	tokenFile    *token.File
 	tokenFileSet *token.FileSet
 }
