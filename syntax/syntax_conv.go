@@ -437,63 +437,61 @@ func (c *syntaxConv) next(n int) token.Pos {
 	return p
 }
 
-func (c *syntaxConv) node(s Syntax) ast.Node {
-	switch s := s.(type) {
-	case nil:
-		return nil
+func (c *syntaxConv) node(from Syntax) (to ast.Node) {
+	switch from := from.(type) {
 	case *Comment:
-		return &ast.Comment{
-			Slash: c.next(len(s.Text)), // TODO: Insert new line?
-			Text:  s.Text,
+		to = &ast.Comment{
+			Slash: c.next(len(from.Text)), // TODO: Insert new line?
+			Text:  from.Text,
 		}
 	case *CommentGroup:
 		var cs []*ast.Comment
-		for _, com := range s.List {
+		for _, com := range from.List {
 			cs = append(cs, c.node(com).(*ast.Comment))
 		}
-		return &ast.CommentGroup{
+		to = &ast.CommentGroup{
 			List: cs,
 		}
 	case *Field:
 		var tag *ast.BasicLit
-		if b, ok := c.expr(s.Tag).(*ast.BasicLit); ok {
+		if b, ok := c.expr(from.Tag).(*ast.BasicLit); ok {
 			tag = b
 		}
-		return &ast.Field{
-			Names: c.idents(s.Names),
+		to = &ast.Field{
+			Names: c.idents(from.Names),
 			Tag:   tag,
-			Type:  c.expr(s.Type),
+			Type:  c.expr(from.Type),
 		}
 	case *FieldList:
-		if s == nil {
-			return (*ast.FieldList)(nil)
-		}
-		var fs []*ast.Field
-		for _, f := range s.List {
-			fs = append(fs, c.node(f).(*ast.Field))
-		}
-		return &ast.FieldList{
-			List: fs,
+		if from == nil {
+			to = (*ast.FieldList)(nil)
+		} else {
+			var fs []*ast.Field
+			for _, f := range from.List {
+				fs = append(fs, c.node(f).(*ast.Field))
+			}
+			to = &ast.FieldList{
+				List: fs,
+			}
 		}
 	case *File:
-		return &ast.File{
-			Name:  c.expr(s.Name).(*ast.Ident),
-			Decls: c.decls(s.Decls),
+		to = &ast.File{
+			Name:  c.expr(from.Name).(*ast.Ident),
+			Decls: c.decls(from.Decls),
 		}
 	case *Package:
 		var fs map[string]*ast.File
-		if s.Files != nil {
+		if from.Files != nil {
 			fs = map[string]*ast.File{}
-			for k, v := range s.Files {
+			for k, v := range from.Files {
 				fs[k] = c.node(v).(*ast.File)
 			}
 		}
-		return &ast.Package{
+		to = &ast.Package{
 			Files: fs,
 		}
-	default:
-		panic(fmt.Sprintf("invalid node: %#v", s)) // TODO: Remove
 	}
+	return to
 }
 
 func (c *syntaxConv) skip(n int) {
