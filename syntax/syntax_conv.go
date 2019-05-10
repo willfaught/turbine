@@ -126,11 +126,11 @@ func (c *syntaxConv) decl(s Syntax) ast.Decl {
 }
 
 func (c *syntaxConv) decls(ss []Syntax) []ast.Decl {
-	var to []ast.Decl
+	var ds []ast.Decl
 	for _, s := range ss {
-		to = append(to, c.decl(s))
+		ds = append(ds, c.decl(s))
 	}
-	return to
+	return ds
 }
 
 func (c *syntaxConv) expr(s Syntax) (e ast.Expr) {
