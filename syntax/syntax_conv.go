@@ -499,45 +499,42 @@ func (c *syntaxConv) skip(n int) {
 	c.end += token.Pos(n)
 }
 
-func (c *syntaxConv) spec(s Syntax) (spec ast.Spec) {
-	switch s := s.(type) {
-	case nil:
-		return nil
+func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
+	switch from := from.(type) {
 	case *Const:
-		c.markup(s.Before)
-		spec = &ast.ValueSpec{
-			Names:  c.idents(s.Names),
-			Type:   c.expr(s.Type),
-			Values: c.exprs(s.Values),
+		c.markup(from.Before)
+		to = &ast.ValueSpec{
+			Names:  c.idents(from.Names),
+			Type:   c.expr(from.Type),
+			Values: c.exprs(from.Values),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Import:
-		c.markup(s.Before)
-		spec = &ast.ImportSpec{
-			Name: ident(c.expr(s.Name)),
-			Path: c.expr(s.Path).(*ast.BasicLit),
+		c.markup(from.Before)
+		to = &ast.ImportSpec{
+			Name:   ident(c.expr(from.Name)),
+			Path:   c.expr(from.Path).(*ast.BasicLit),
+			EndPos: 0, // TODO
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Type:
-		c.markup(s.Before)
-		spec = &ast.TypeSpec{
-			Assign: s.Assign,
-			Name:   c.expr(s.Name).(*ast.Ident),
-			Type:   c.expr(s.Type),
+		c.markup(from.Before)
+		to = &ast.TypeSpec{
+			Assign: from.Assign,
+			Name:   c.expr(from.Name).(*ast.Ident),
+			Type:   c.expr(from.Type),
 		}
-		c.markup(s.After)
+		c.markup(from.After)
 	case *Var:
-		c.markup(s.Before)
-		spec = &ast.ValueSpec{
-			Names:  c.idents(s.Names),
-			Type:   c.expr(s.Type),
-			Values: c.exprs(s.Values),
+		c.markup(from.Before)
+		to = &ast.ValueSpec{
+			Names:  c.idents(from.Names),
+			Type:   c.expr(from.Type),
+			Values: c.exprs(from.Values),
 		}
-		c.markup(s.After)
-	default:
-		panic(fmt.Sprintf("invalid specification: %#v", s)) // TODO: Remove
+		c.markup(from.After)
 	}
-	return spec
+	return to
 }
 
 func (c *syntaxConv) specs(from []Syntax) []ast.Spec {
