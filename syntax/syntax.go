@@ -1,82 +1,76 @@
 package syntax
 
 import (
+	"go/ast"
 	"go/token"
 )
 
-/*
-TODO
-
-add Syntax.Node()
-
-change Comment to string
-*/
-
+// Syntax is a simpler syntax that converts to nodes.
 type Syntax interface {
-	syntax()
+	Node() ast.Node
 }
 
-func (*Array) syntax()        {}
-func (*Assert) syntax()       {}
-func (*Assign) syntax()       {}
-func (*Binary) syntax()       {}
-func (*Block) syntax()        {}
-func (*Break) syntax()        {}
-func (*Call) syntax()         {}
-func (*Case) syntax()         {}
-func (*Chan) syntax()         {}
-func (*ChanIn) syntax()       {}
-func (*ChanOut) syntax()      {}
-func (*Comment) syntax()      {}
-func (*CommentGroup) syntax() {}
-func (*Composite) syntax()    {}
-func (*Const) syntax()        {}
-func (*ConstList) syntax()    {}
-func (*Continue) syntax()     {}
-func (*Dec) syntax()          {}
-func (*Defer) syntax()        {}
-func (*Ellipsis) syntax()     {}
-func (*Empty) syntax()        {}
-func (*Fallthrough) syntax()  {}
-func (*Field) syntax()        {}
-func (*FieldList) syntax()    {}
-func (*File) syntax()         {}
-func (*Float) syntax()        {}
-func (*For) syntax()          {}
-func (*Func) syntax()         {}
-func (*Go) syntax()           {}
-func (*Goto) syntax()         {}
-func (*If) syntax()           {}
-func (*Imag) syntax()         {}
-func (*Import) syntax()       {}
-func (*ImportList) syntax()   {}
-func (*Inc) syntax()          {}
-func (*Index) syntax()        {}
-func (*Int) syntax()          {}
-func (*Interface) syntax()    {}
-func (*KeyValue) syntax()     {}
-func (*Label) syntax()        {}
-func (*Line) syntax()         {}
-func (*Map) syntax()          {}
-func (*Markup) syntax()       {}
-func (*Name) syntax()         {}
-func (*Package) syntax()      {}
-func (*Paren) syntax()        {}
-func (*Range) syntax()        {}
-func (*Return) syntax()       {}
-func (*Rune) syntax()         {}
-func (*Select) syntax()       {}
-func (*Selector) syntax()     {}
-func (*Send) syntax()         {}
-func (*Slice) syntax()        {}
-func (*String) syntax()       {}
-func (*Struct) syntax()       {}
-func (*Switch) syntax()       {}
-func (*Type) syntax()         {}
-func (*TypeList) syntax()     {}
-func (*Unary) syntax()        {}
-func (*Var) syntax()          {}
-func (*VarList) syntax()      {}
+func (a *Array) Node() ast.Node        { return convertSyntax(a) }
+func (a *Assert) Node() ast.Node       { return convertSyntax(a) }
+func (a *Assign) Node() ast.Node       { return convertSyntax(a) }
+func (b *Binary) Node() ast.Node       { return convertSyntax(b) }
+func (b *Block) Node() ast.Node        { return convertSyntax(b) }
+func (b *Break) Node() ast.Node        { return convertSyntax(b) }
+func (c *Call) Node() ast.Node         { return convertSyntax(c) }
+func (c *Case) Node() ast.Node         { return convertSyntax(c) }
+func (c *Chan) Node() ast.Node         { return convertSyntax(c) }
+func (c *ChanIn) Node() ast.Node       { return convertSyntax(c) }
+func (c *ChanOut) Node() ast.Node      { return convertSyntax(c) }
+func (c *Comment) Node() ast.Node      { return convertSyntax(c) }
+func (c *CommentGroup) Node() ast.Node { return convertSyntax(c) }
+func (c *Composite) Node() ast.Node    { return convertSyntax(c) }
+func (c *Const) Node() ast.Node        { return convertSyntax(c) }
+func (c *ConstList) Node() ast.Node    { return convertSyntax(c) }
+func (c *Continue) Node() ast.Node     { return convertSyntax(c) }
+func (d *Dec) Node() ast.Node          { return convertSyntax(d) }
+func (d *Defer) Node() ast.Node        { return convertSyntax(d) }
+func (e *Ellipsis) Node() ast.Node     { return convertSyntax(e) }
+func (e *Empty) Node() ast.Node        { return convertSyntax(e) }
+func (f *Fallthrough) Node() ast.Node  { return convertSyntax(f) }
+func (f *Field) Node() ast.Node        { return convertSyntax(f) }
+func (f *FieldList) Node() ast.Node    { return convertSyntax(f) }
+func (f *File) Node() ast.Node         { return convertSyntax(f) }
+func (f *Float) Node() ast.Node        { return convertSyntax(f) }
+func (f *For) Node() ast.Node          { return convertSyntax(f) }
+func (f *Func) Node() ast.Node         { return convertSyntax(f) }
+func (g *Go) Node() ast.Node           { return convertSyntax(g) }
+func (g *Goto) Node() ast.Node         { return convertSyntax(g) }
+func (i *If) Node() ast.Node           { return convertSyntax(i) }
+func (i *Imag) Node() ast.Node         { return convertSyntax(i) }
+func (i *Import) Node() ast.Node       { return convertSyntax(i) }
+func (i *ImportList) Node() ast.Node   { return convertSyntax(i) }
+func (i *Inc) Node() ast.Node          { return convertSyntax(i) }
+func (i *Index) Node() ast.Node        { return convertSyntax(i) }
+func (i *Int) Node() ast.Node          { return convertSyntax(i) }
+func (i *Interface) Node() ast.Node    { return convertSyntax(i) }
+func (k *KeyValue) Node() ast.Node     { return convertSyntax(k) }
+func (l *Label) Node() ast.Node        { return convertSyntax(l) }
+func (l *Line) Node() ast.Node         { return convertSyntax(l) }
+func (m *Map) Node() ast.Node          { return convertSyntax(m) }
+func (m *Markup) Node() ast.Node       { return convertSyntax(m) }
+func (n *Name) Node() ast.Node         { return convertSyntax(n) }
+func (p *Package) Node() ast.Node      { return convertSyntax(p) }
+func (p *Paren) Node() ast.Node        { return convertSyntax(p) }
+func (r *Range) Node() ast.Node        { return convertSyntax(r) }
+func (r *Return) Node() ast.Node       { return convertSyntax(r) }
+func (r *Rune) Node() ast.Node         { return convertSyntax(r) }
+func (s *Select) Node() ast.Node       { return convertSyntax(s) }
+func (s *Selector) Node() ast.Node     { return convertSyntax(s) }
+func (s *Send) Node() ast.Node         { return convertSyntax(s) }
+func (s *Slice) Node() ast.Node        { return convertSyntax(s) }
+func (s *String) Node() ast.Node       { return convertSyntax(s) }
+func (s *Struct) Node() ast.Node       { return convertSyntax(s) }
+func (s *Switch) Node() ast.Node       { return convertSyntax(s) }
+func (t *Type) Node() ast.Node         { return convertSyntax(t) }
+func (t *TypeList) Node() ast.Node     { return convertSyntax(t) }
+func (u *Unary) Node() ast.Node        { return convertSyntax(u) }
+func (v *Var) Node() ast.Node          { return convertSyntax(v) }
+func (v *VarList) Node() ast.Node      { return convertSyntax(v) }
 
 type Markup struct {
 	Before, After []Syntax

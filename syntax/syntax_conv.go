@@ -29,6 +29,11 @@ var (
 	lenVar       = len(token.VAR.String())
 )
 
+func convertSyntax(s Syntax) ast.Node {
+	var c syntaxConv
+	return c.node(s)
+}
+
 func blockStmt(s ast.Stmt) *ast.BlockStmt {
 	if s == nil {
 		return nil
@@ -492,6 +497,16 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		}
 		to = &ast.Package{
 			Files: fs,
+		}
+	default:
+		if d := c.decl(from); d != nil {
+			to = d
+		} else if e := c.expr(from); e != nil {
+			to = e
+		} else if s := c.spec(from); s != nil {
+			to = s
+		} else if s := c.stmt(from); s != nil {
+			to = s
 		}
 	}
 	return to
