@@ -10,8 +10,10 @@ var (
 	lenArrow     = len(token.ARROW.String())
 	lenChan      = len(token.CHAN.String())
 	lenColon     = len(token.COLON.String())
+	lenConst     = len(token.CONST.String())
 	lenEllipsis  = len(token.ELLIPSIS.String())
 	lenFunc      = len(token.FUNC.String())
+	lenImport    = len(token.IMPORT.String())
 	lenInterface = len(token.INTERFACE.String())
 	lenLbrace    = len(token.LBRACE.String())
 	lenLbrack    = len(token.LBRACK.String())
@@ -23,6 +25,8 @@ var (
 	lenRbrack    = len(token.RBRACK.String())
 	lenRparen    = len(token.RPAREN.String())
 	lenStruct    = len(token.STRUCT.String())
+	lenType      = len(token.TYPE.String())
+	lenVar       = len(token.VAR.String())
 )
 
 func blockStmt(s ast.Stmt) *ast.BlockStmt {
@@ -52,15 +56,17 @@ func (c *syntaxConv) decl(s Syntax) ast.Decl {
 		return nil
 	case *Const:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(s)},
-			Tok:   token.CONST,
+			Tok:    token.CONST,
+			TokPos: c.next(lenConst),
+			Specs:  []ast.Spec{c.spec(s)},
 		}
 	case *ConstList:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: c.specs(s.List),
-			Tok:   token.CONST,
+			Tok:    token.CONST,
+			TokPos: c.next(lenConst),
+			Lparen: c.next(lenLparen),
+			Specs:  c.specs(s.List),
+			Rparen: c.next(lenRparen),
 		}
 	case *Func:
 		return &ast.FuncDecl{
@@ -74,39 +80,45 @@ func (c *syntaxConv) decl(s Syntax) ast.Decl {
 		}
 	case *Import:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(s)},
-			Tok:   token.IMPORT,
+			Tok:    token.IMPORT,
+			TokPos: c.next(lenImport),
+			Specs:  []ast.Spec{c.spec(s)},
 		}
 	case *ImportList:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: c.specs(s.List),
-			Tok:   token.IMPORT,
+			Tok:    token.IMPORT,
+			TokPos: c.next(lenImport),
+			Lparen: c.next(lenLparen),
+			Specs:  c.specs(s.List),
+			Rparen: c.next(lenRparen),
 		}
 	case *Type:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(s)},
-			Tok:   token.TYPE,
+			Tok:    token.TYPE,
+			TokPos: c.next(lenType),
+			Specs:  []ast.Spec{c.spec(s)},
 		}
 	case *TypeList:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: c.specs(s.List),
-			Tok:   token.TYPE,
+			Tok:    token.TYPE,
+			TokPos: c.next(lenType),
+			Lparen: c.next(lenLparen),
+			Specs:  c.specs(s.List),
+			Rparen: c.next(lenRparen),
 		}
 	case *Var:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: []ast.Spec{c.spec(s)},
-			Tok:   token.VAR,
+			Tok:    token.VAR,
+			TokPos: c.next(lenVar),
+			Specs:  []ast.Spec{c.spec(s)},
 		}
 	case *VarList:
 		return &ast.GenDecl{
-			// TODO: Lparen, Rparen
-			Specs: c.specs(s.List),
-			Tok:   token.VAR,
+			Tok:    token.VAR,
+			TokPos: c.next(lenVar),
+			Lparen: c.next(lenLparen),
+			Specs:  c.specs(s.List),
+			Rparen: c.next(lenRparen),
 		}
 	default:
 		return nil
