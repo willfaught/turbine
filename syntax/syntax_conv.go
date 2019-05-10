@@ -25,7 +25,7 @@ func ident(e ast.Expr) *ast.Ident {
 	return e.(*ast.Ident)
 }
 
-func maybeBlockStmt(s ast.Stmt) *ast.BlockStmt {
+func blockStmt(s ast.Stmt) *ast.BlockStmt {
 	if s == nil {
 		return nil
 	}
@@ -57,7 +57,7 @@ func (c *syntaxConv) decl(d Syntax) ast.Decl {
 		}
 	case *Func:
 		return &ast.FuncDecl{
-			Body: maybeBlockStmt(c.stmt(d.Body)),
+			Body: blockStmt(c.stmt(d.Body)),
 			Name: c.expr(d.Name).(*ast.Ident),
 			Recv: c.node(d.Receiver).(*ast.FieldList),
 			Type: &ast.FuncType{
