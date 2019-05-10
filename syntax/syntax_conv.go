@@ -471,7 +471,9 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 				fs = append(fs, c.node(f).(*ast.Field))
 			}
 			to = &ast.FieldList{
-				List: fs,
+				Opening: c.next(1),
+				List:    fs,
+				Closing: c.next(1),
 			}
 		}
 	case *File:
