@@ -5,6 +5,14 @@ import (
 	"go/token"
 )
 
+func Convert(f *token.FileSet, n ast.Node) Syntax {
+	if f == nil {
+		f = token.NewFileSet()
+	}
+	c := nodeConv{tokens: f}
+	return c.nodePos(n.Pos(), n.End(), n)
+}
+
 func maybeBlock(s Syntax) *Block {
 	if s == nil {
 		return nil
@@ -20,37 +28,143 @@ func maybeName(s Syntax) *Name {
 }
 
 type nodeConv struct {
-	comment  int
 	comments ast.CommentMap
-	file     *ast.File
+	file     *token.File
 	tokens   *token.FileSet
 }
 
 func (c *nodeConv) decls(from []ast.Decl) []Syntax {
-	var to []Syntax
-	for _, f := range from {
-		to = append(to, c.node(f))
+	if len(from) == 0 {
+		return nil
+	}
+	to := make([]Syntax, len(from))
+	for i, f := range from {
+		to[i] = c.node(f)
 	}
 	return to
 }
 
 func (c *nodeConv) exprs(from []ast.Expr) []Syntax {
-	var to []Syntax
-	for _, f := range from {
-		to = append(to, c.node(f))
+	return c.exprsPos(0, 0, from)
+}
+
+func (c *nodeConv) exprsPos(begin, end token.Pos, from []ast.Expr) []Syntax {
+	if len(from) == 0 {
+		return nil
+	}
+	to := make([]Syntax, len(from))
+	for i, f := range from {
+		to[i] = c.node(f)
 	}
 	return to
 }
 
 func (c *nodeConv) idents(from []*ast.Ident) []*Name {
-	var to []*Name
-	for _, f := range from {
-		to = append(to, c.node(f).(*Name))
+	if len(from) == 0 {
+		return nil
+	}
+	to := make([]*Name, len(from))
+	for i, f := range from {
+		to[i] = c.node(f).(*Name)
 	}
 	return to
 }
 
+func (c *nodeConv) nodeBegin(n ast.Node) token.Pos {
+	if cgs := c.comments[n]; len(cgs) > 0 {
+		if p := cgs[0].List[0].Pos(); p < n.Pos() {
+			return p
+		}
+	}
+	return n.Pos()
+}
+
+func (c *nodeConv) nodeEnd(n ast.Node) token.Pos {
+	if cgs := c.comments[n]; len(cgs) > 0 {
+		cs := cgs[len(cgs)-1].List
+		if p := cs[len(cs)-1].End(); p > n.End() {
+			return p
+		}
+	}
+	return n.End()
+}
+
+func (c *nodeConv) markup(begin, end token.Pos, n ast.Node) Markup {
+	var after, before []Syntax
+	var comment *ast.Comment
+	groups := c.comments[n]
+	if begin != token.NoPos { // TODO: Perhaps not needed if all of nodePos() calls markup()?
+		for j, lines := 0, c.file.Line(c.nodeBegin(n))-c.file.Line(begin); j < lines; j++ {
+			before = append(before, &Line{})
+		}
+	}
+	i, l := 0, len(groups)
+	for ; i < l; i++ {
+		group := groups[i]
+		if group.Pos() >= n.Pos() {
+			break
+		}
+		if i > 0 {
+			for i, lines := 0, c.file.Line(group.Pos())-c.file.Line(groups[i-1].End())-1; i < lines; i++ {
+				before = append(before, &Line{})
+			}
+		}
+		var j int
+		for j, comment = range group.List {
+			if j > 0 {
+				if prev := group.List[j-1]; prev.Text[1] == '*' && c.file.Line(prev.End()) != c.file.Line(comment.Pos()) {
+					before = append(before, &Line{})
+				}
+			}
+			before = append(before, c.node(comment))
+		}
+	}
+	if comment != nil {
+		if comment.Text[1] == '*' && c.file.Line(comment.End()) != c.file.Line(n.Pos()) {
+			before = append(before, &Line{})
+		}
+		for j, lines := 0, c.file.Line(n.Pos())-c.file.Line(comment.End())-1; j < lines; j++ {
+			before = append(before, &Line{})
+		}
+	}
+	if len(groups) > 0 {
+		for j, lines := 0, c.file.Line(groups[0].Pos())-c.file.Line(n.End())-1; j < lines; j++ {
+			after = append(after, &Line{})
+		}
+	}
+	comment = nil
+	groups = groups[i:]
+	l = len(groups)
+	for i = 0; i < l; i++ {
+		group := groups[i]
+		if i > 0 {
+			for i, lines := 0, c.file.Line(group.Pos())-c.file.Line(groups[i-1].End())-1; i < lines; i++ {
+				after = append(after, &Line{})
+			}
+		}
+		var j int
+		for j, comment = range group.List {
+			if j > 0 {
+				if prev := group.List[j-1]; prev.Text[1] == '*' && c.file.Line(prev.End()) != c.file.Line(comment.Pos()) {
+					after = append(after, &Line{})
+				}
+			}
+			after = append(after, c.node(comment))
+		}
+	}
+	if end != token.NoPos { // TODO: Perhaps not needed if all of nodePos() calls markup()?
+		for j, lines := 0, c.file.Line(end-1)-c.file.Line(c.nodeEnd(n)); j < lines; j++ { // end-1 because end is a go/ast.Node.End
+			after = append(after, &Line{})
+		}
+	}
+	return Markup{After: after, Before: before}
+}
+
 func (c *nodeConv) node(n ast.Node) Syntax {
+	return c.nodePos(token.NoPos, token.NoPos, n)
+}
+
+func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 	switch n := n.(type) {
 	case nil:
 		return nil
@@ -255,6 +369,10 @@ func (c *nodeConv) node(n ast.Node) Syntax {
 			return nil
 		}
 		switch n.Kind {
+		case token.CHAR:
+			return &Rune{
+				Text: n.Value,
+			}
 		case token.FLOAT:
 			return &Float{
 				Text: n.Value,
@@ -265,10 +383,6 @@ func (c *nodeConv) node(n ast.Node) Syntax {
 			}
 		case token.INT:
 			return &Int{
-				Text: n.Value,
-			}
-		case token.CHAR:
-			return &Rune{
 				Text: n.Value,
 			}
 		case token.STRING:
@@ -430,15 +544,23 @@ func (c *nodeConv) node(n ast.Node) Syntax {
 			List: fs,
 		}
 	case *ast.File:
+		// TODO
 		// doc
 		// pkg name
 		// imports
 		// decls
 		c.comments = ast.NewCommentMap(c.tokens, n, n.Comments)
-		c.file = n
+		c.file = c.tokens.File(n.Pos())
+		var x token.Pos
+		if l := len(n.Decls); l > 0 {
+			x = c.nodeBegin(n.Decls[0])
+		} else {
+			x = n.End()
+		}
 		return &File{
-			Name:  c.node(n.Name).(*Name),
-			Decls: c.decls(n.Decls),
+			Markup: c.markup(c.file.Pos(0), n.End(), n),
+			Name:   c.nodePos(add(n.Package, lenPackage), x, n.Name).(*Name),
+			Decls:  c.decls(n.Decls),
 		}
 	case *ast.Package:
 		var fs map[string]*File
@@ -455,45 +577,28 @@ func (c *nodeConv) node(n ast.Node) Syntax {
 	return nil
 }
 
-func (c *nodeConv) assignComments(ln, rn ast.Node, lm, rm *Markup) {
-	if c.file == nil || len(c.file.Comments) == 0 {
-		return
-	}
-	for {
-		if c.comment >= len(c.file.Comments) {
-			break
-		}
-		var next = c.file.Comments[c.comment]
-		if ln != nil && ln.Pos() >= next.Pos() {
-			break
-		}
-		if rn != nil && next.Pos() >= rn.Pos() {
-			break
-		}
-		var found bool
-		for _, com := range c.comments[ln] {
-			if com == next {
-				found = true
-			}
-		}
-		if found {
-
-		}
-	}
+func add(p token.Pos, n int) token.Pos {
+	return p + token.Pos(n)
 }
 
 func (c *nodeConv) specs(from []ast.Spec) []Syntax {
-	var to []Syntax
-	for _, f := range from {
-		to = append(to, c.node(f))
+	if len(from) == 0 {
+		return nil
+	}
+	to := make([]Syntax, len(from))
+	for i, f := range from {
+		to[i] = c.node(f)
 	}
 	return to
 }
 
 func (c *nodeConv) stmts(from []ast.Stmt) []Syntax {
-	var to []Syntax
-	for _, f := range from {
-		to = append(to, c.node(f))
+	if len(from) == 0 {
+		return nil
+	}
+	to := make([]Syntax, len(from))
+	for i, f := range from {
+		to[i] = c.node(f)
 	}
 	return to
 }

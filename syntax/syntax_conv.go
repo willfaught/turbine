@@ -20,6 +20,7 @@ var (
 	lenLparen    = len(token.LPAREN.String())
 	lenMap       = len(token.MAP.String())
 	lenMul       = len(token.MUL.String())
+	lenPackage   = len(token.PACKAGE.String())
 	lenPeriod    = len(token.PERIOD.String())
 	lenRbrace    = len(token.RBRACE.String())
 	lenRbrack    = len(token.RBRACK.String())
