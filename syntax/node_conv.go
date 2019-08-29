@@ -33,13 +33,23 @@ type nodeConv struct {
 	tokens   *token.FileSet
 }
 
-func (c *nodeConv) decls(from []ast.Decl) []Syntax {
+func (c *nodeConv) decls(begin, end token.Pos, from []ast.Decl) []Syntax {
 	if len(from) == 0 {
 		return nil
 	}
 	to := make([]Syntax, len(from))
 	for i, f := range from {
-		to[i] = c.node(f)
+		if i == 0 {
+			to[i] = c.nodePos(begin, c.nodeEnd(f), f)
+		} else {
+			var e token.Pos
+			if i == len(from)-1 {
+				e = end
+			} else {
+				e = c.nodeBegin(from[i+1])
+			}
+			to[i] = c.nodePos(c.nodeBegin(f), e, f)
+		}
 	}
 	return to
 }
@@ -560,7 +570,7 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		return &File{
 			Markup: c.markup(c.file.Pos(0), n.End(), n),
 			Name:   c.nodePos(add(n.Package, lenPackage), x, n.Name).(*Name),
-			Decls:  c.decls(n.Decls),
+			Decls:  c.decls(x, n.End(), n.Decls),
 		}
 	case *ast.Package:
 		var fs map[string]*File
