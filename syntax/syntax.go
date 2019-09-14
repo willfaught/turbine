@@ -1,13 +1,30 @@
 package syntax
 
 import (
+	"bytes"
 	"go/ast"
+	"go/format"
 	"go/token"
 )
 
 // Syntax is a simpler syntax that converts to nodes.
 type Syntax interface {
-	Node() ast.Node
+	// Node() ast.Node
+}
+
+func ConvertFile(f *File) (*token.FileSet, *ast.File) {
+	var c syntaxConv
+	n := c.node(f)
+	return c.tokenFileSet, n.(*ast.File)
+}
+
+func MustFileString(f *File) string {
+	fset, n := ConvertFile(f)
+	b := &bytes.Buffer{}
+	if err := format.Node(b, fset, n); err != nil {
+		panic(err)
+	}
+	return b.String()
 }
 
 func (a *Array) Node() ast.Node        { return convertSyntax(a) }
@@ -71,6 +88,28 @@ func (t *TypeList) Node() ast.Node     { return convertSyntax(t) }
 func (u *Unary) Node() ast.Node        { return convertSyntax(u) }
 func (v *Var) Node() ast.Node          { return convertSyntax(v) }
 func (v *VarList) Node() ast.Node      { return convertSyntax(v) }
+
+type GenDecl struct {
+	Tok   token.Token
+	Specs []Spec
+}
+
+type Spec interface{}
+
+type ImportSpec struct {
+	Name    *Ident
+	Path    *BasicLit
+	Comment *CommentGroup
+}
+
+type BasicLit struct {
+	Kind  token.Token
+	Value string
+}
+
+type Ident struct {
+	Name string
+}
 
 type Array struct {
 	Markup
@@ -160,7 +199,8 @@ type Const struct {
 
 type ConstList struct {
 	Markup
-	List []Syntax
+	Between []Syntax
+	List    []Syntax
 }
 
 type Continue struct {
@@ -206,8 +246,8 @@ type FieldList struct {
 
 type File struct {
 	Markup
-	Name  *Name
-	Decls []Syntax
+	Package *Name
+	Decls   []Syntax
 }
 
 type Float struct {
@@ -263,7 +303,8 @@ type Import struct {
 
 type ImportList struct {
 	Markup
-	List []Syntax
+	Between []Syntax
+	List    []Syntax
 }
 
 type Inc struct {
@@ -368,6 +409,12 @@ type Slice struct {
 	Max  Syntax
 }
 
+type Space struct{}
+
+type Spaces struct {
+	Count int
+}
+
 type String struct {
 	Markup
 	Text string
@@ -395,7 +442,8 @@ type Type struct {
 
 type TypeList struct {
 	Markup
-	List []Syntax
+	Between []Syntax
+	List    []Syntax
 }
 
 type Unary struct {
@@ -413,5 +461,6 @@ type Var struct {
 
 type VarList struct {
 	Markup
-	List []Syntax
+	Between []Syntax
+	List    []Syntax
 }

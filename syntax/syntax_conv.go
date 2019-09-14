@@ -20,11 +20,13 @@ var (
 	lenLparen    = len(token.LPAREN.String())
 	lenMap       = len(token.MAP.String())
 	lenMul       = len(token.MUL.String())
+	lenNewline   = 1
 	lenPackage   = len(token.PACKAGE.String())
 	lenPeriod    = len(token.PERIOD.String())
 	lenRbrace    = len(token.RBRACE.String())
 	lenRbrack    = len(token.RBRACK.String())
 	lenRparen    = len(token.RPAREN.String())
+	lenSpace     = 1
 	lenStruct    = len(token.STRUCT.String())
 	lenType      = len(token.TYPE.String())
 	lenVar       = len(token.VAR.String())
@@ -51,7 +53,8 @@ func ident(e ast.Expr) *ast.Ident {
 
 type syntaxConv struct {
 	astFile      *ast.File
-	end          token.Pos
+	last         token.Pos
+	newLineEmpty bool // new line added but nothing added to it yet. TODO: check if true at end and remove last line from token file if true.
 	tokenFile    *token.File
 	tokenFileSet *token.FileSet
 }
@@ -68,24 +71,27 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 		c.markup(from.After)
 	case *ConstList:
 		c.markup(from.Before)
-		to = &ast.GenDecl{
-			Tok:    token.CONST,
-			TokPos: c.next(lenConst),
-			Lparen: c.next(lenLparen),
-			Specs:  c.specs(from.List),
-			Rparen: c.next(lenRparen),
-		}
+		g := &ast.GenDecl{}
+		g.Tok = token.CONST
+		g.TokPos = c.next(lenConst)
+		c.markup(from.Between)
+		g.Lparen = c.next(lenLparen)
+		g.Specs = c.specs(from.List)
+		g.Rparen = c.next(lenRparen)
 		c.markup(from.After)
+		to = g
 	case *Func:
 		c.markup(from.Before)
+		funcPos := c.next(lenFunc)
 		to = &ast.FuncDecl{
-			Body: blockStmt(c.stmt(from.Body)),
-			Name: c.expr(from.Name).(*ast.Ident),
 			Recv: c.node(from.Receiver).(*ast.FieldList),
+			Name: c.expr(from.Name).(*ast.Ident),
 			Type: &ast.FuncType{
+				Func:    funcPos,
 				Params:  c.node(from.Parameters).(*ast.FieldList),
 				Results: c.node(from.Results).(*ast.FieldList),
 			},
+			Body: blockStmt(c.stmt(from.Body)),
 		}
 		c.markup(from.After)
 	case *Import:
@@ -98,14 +104,15 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 		c.markup(from.After)
 	case *ImportList:
 		c.markup(from.Before)
-		to = &ast.GenDecl{
-			Tok:    token.IMPORT,
-			TokPos: c.next(lenImport),
-			Lparen: c.next(lenLparen),
-			Specs:  c.specs(from.List),
-			Rparen: c.next(lenRparen),
-		}
+		g := &ast.GenDecl{}
+		g.Tok = token.IMPORT
+		g.TokPos = c.next(lenImport)
+		c.markup(from.Between)
+		g.Lparen = c.next(lenLparen)
+		g.Specs = c.specs(from.List)
+		g.Rparen = c.next(lenRparen)
 		c.markup(from.After)
+		to = g
 	case *Type:
 		c.markup(from.Before)
 		to = &ast.GenDecl{
@@ -116,14 +123,15 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 		c.markup(from.After)
 	case *TypeList:
 		c.markup(from.Before)
-		to = &ast.GenDecl{
-			Tok:    token.TYPE,
-			TokPos: c.next(lenType),
-			Lparen: c.next(lenLparen),
-			Specs:  c.specs(from.List),
-			Rparen: c.next(lenRparen),
-		}
+		g := &ast.GenDecl{}
+		g.Tok = token.TYPE
+		g.TokPos = c.next(lenType)
+		c.markup(from.Between)
+		g.Lparen = c.next(lenLparen)
+		g.Specs = c.specs(from.List)
+		g.Rparen = c.next(lenRparen)
 		c.markup(from.After)
+		to = g
 	case *Var:
 		c.markup(from.Before)
 		to = &ast.GenDecl{
@@ -134,14 +142,15 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 		c.markup(from.After)
 	case *VarList:
 		c.markup(from.Before)
-		to = &ast.GenDecl{
-			Tok:    token.VAR,
-			TokPos: c.next(lenVar),
-			Lparen: c.next(lenLparen),
-			Specs:  c.specs(from.List),
-			Rparen: c.next(lenRparen),
-		}
+		g := &ast.GenDecl{}
+		g.Tok = token.VAR
+		g.TokPos = c.next(lenVar)
+		c.markup(from.Between)
+		g.Lparen = c.next(lenLparen)
+		g.Specs = c.specs(from.List)
+		g.Rparen = c.next(lenRparen)
 		c.markup(from.After)
+		to = g
 	}
 	return to
 }
@@ -161,7 +170,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Lbrack: c.next(lenLbrack),
 			Len:    c.expr(from.Length),
 		}
-		c.skip(lenRbrack)
+		c.next(lenRbrack)
 		to.(*ast.ArrayType).Elt = c.expr(from.Element)
 		c.markup(from.After)
 	case *Assert:
@@ -337,7 +346,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		to = &ast.SelectorExpr{
 			X: c.expr(from.X),
 		}
-		c.skip(lenPeriod)
+		c.next(lenPeriod)
 		to.(*ast.SelectorExpr).Sel = c.expr(from.Sel).(*ast.Ident)
 		c.markup(from.After)
 	case *Slice:
@@ -405,26 +414,31 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 }
 
 func (c *syntaxConv) markup(ss []Syntax) {
-	if c.astFile == nil || c.tokenFile == nil {
+	if c.astFile == nil || c.tokenFile == nil { // TODO: Remove these, require proper setup
 		return
 	}
 	var cg *ast.CommentGroup
-	var lastLine bool
+	var lastLine bool // was last syntax item a *Line?
 	for _, s := range ss {
-		switch s.(type) {
+		switch s := s.(type) {
 		case *Comment:
 			if cg == nil {
 				cg = &ast.CommentGroup{}
 			}
-			cg.List = append(cg.List, c.node(s).(*ast.Comment))
+			cg.List = append(cg.List, c.node(s).(*ast.Comment)) // TODO: Add newlines in comment
 			lastLine = false
 		case *Line:
 			if lastLine && cg != nil {
 				c.astFile.Comments = append(c.astFile.Comments, cg)
 				cg = nil
 			}
-			c.tokenFile.AddLine(c.tokenFile.Offset(c.next(1)))
+			c.tokenFile.AddLine(c.tokenFile.Offset(c.next(1) + 1))
+			c.newLineEmpty = true
 			lastLine = true
+		case *Space:
+			c.next(1)
+		case *Spaces:
+			c.next(s.Count)
 		default:
 			panic(fmt.Sprintf("invalid markup: %#v", s)) // TODO: Remove
 		}
@@ -435,8 +449,9 @@ func (c *syntaxConv) markup(ss []Syntax) {
 }
 
 func (c *syntaxConv) next(n int) token.Pos {
-	var p = c.end
-	c.end += token.Pos(n)
+	var p = c.last + 1
+	c.last += token.Pos(n)
+	c.newLineEmpty = false
 	return p
 }
 
@@ -483,10 +498,13 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		if c.tokenFileSet == nil {
 			c.tokenFileSet = token.NewFileSet()
 		}
-		c.astFile = &ast.File{}
-		c.astFile.Name = c.expr(from.Name).(*ast.Ident)
-		c.astFile.Decls = c.decls(from.Decls)
 		c.tokenFile = c.tokenFileSet.AddFile("", -1, 999999999) // TODO
+		c.astFile = &ast.File{}
+		c.markup(from.Markup.Before)
+		c.astFile.Package = c.next(lenPackage)
+		c.astFile.Name = c.expr(from.Package).(*ast.Ident)
+		c.astFile.Decls = c.decls(from.Decls)
+		c.markup(from.Markup.After)
 		to = c.astFile
 	case *Package:
 		var fs map[string]*ast.File
@@ -511,10 +529,6 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		}
 	}
 	return to
-}
-
-func (c *syntaxConv) skip(n int) {
-	c.end += token.Pos(n)
 }
 
 func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {

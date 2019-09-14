@@ -39,17 +39,23 @@ func (c *nodeConv) decls(begin, end token.Pos, from []ast.Decl) []Syntax {
 	}
 	to := make([]Syntax, len(from))
 	for i, f := range from {
+		var declBegin, declEnd token.Pos
 		if i == 0 {
-			to[i] = c.nodePos(begin, c.nodeEnd(f), f)
-		} else {
-			var e token.Pos
-			if i == len(from)-1 {
-				e = end
+			declBegin = begin
+			if len(from) > 1 {
+				declEnd = c.nodeBegin(from[1])
 			} else {
-				e = c.nodeBegin(from[i+1])
+				declEnd = end
 			}
-			to[i] = c.nodePos(c.nodeBegin(f), e, f)
+		} else {
+			declBegin = c.nodeBegin(f)
+			if i == len(from)-1 {
+				declEnd = end
+			} else {
+				declEnd = c.nodeBegin(from[i+1])
+			}
 		}
+		to[i] = c.nodePos(declBegin, declEnd, f)
 	}
 	return to
 }
@@ -313,18 +319,46 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			Results:    c.node(n.Type.Results).(*FieldList),
 		}
 	case *ast.GenDecl:
+		m := c.markup(begin, end, n)
+		// TODO: Capture comments and lines between n.Tok and n.Lparen
+		if n.Lparen == token.NoPos {
+			begin = n.TokPos + token.Pos(len(n.Tok.String()))
+			end = n.End()
+		} else {
+			begin = n.Lparen + 1
+			end = n.Rparen
+		}
 		var ss []Syntax
-		for _, spec := range n.Specs {
+		for i, spec := range n.Specs {
 			var syn Syntax
+			var specBegin, specEnd token.Pos
+			if i == 0 {
+				specBegin = begin
+				if len(n.Specs) > 1 {
+					specEnd = c.nodeBegin(n.Specs[1])
+				} else {
+					specEnd = end
+				}
+			} else {
+				specBegin = c.nodeBegin(spec)
+				if i == len(n.Specs)-1 {
+					specEnd = end
+				} else {
+					specEnd = c.nodeBegin(n.Specs[i+1])
+				}
+			}
+			// TODO: Capture lines between specs
 			switch spec := spec.(type) {
 			case *ast.ImportSpec:
 				syn = &Import{
-					Name: maybeName(c.node(spec.Name)),
-					Path: c.node(spec.Path).(*String),
+					Markup: c.markup(specBegin, specEnd, spec),
+					Name:   maybeName(c.nodePos(spec.Name.Pos(), spec.Path.Pos(), spec.Name)),
+					Path:   c.nodePos(c.nodeBegin(spec.Path), c.nodeEnd(spec.Path), spec.Path).(*String),
 				}
 			case *ast.TypeSpec:
 				syn = &Type{
 					Assign: spec.Assign,
+					Markup: c.markup(specBegin, specEnd, spec),
 					Name:   c.node(spec.Name).(*Name),
 					Type:   c.node(spec.Type),
 				}
@@ -332,12 +366,14 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 				switch n.Tok {
 				case token.CONST:
 					syn = &Const{
+						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
 						Type:   c.node(spec.Type),
 						Values: c.exprs(spec.Values),
 					}
 				case token.VAR:
 					syn = &Var{
+						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
 						Type:   c.node(spec.Type),
 						Values: c.exprs(spec.Values),
@@ -351,21 +387,13 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 		switch n.Tok {
 		case token.CONST:
-			return &ConstList{
-				List: ss,
-			}
+			return &ConstList{List: ss, Markup: m}
 		case token.IMPORT:
-			return &ImportList{
-				List: ss,
-			}
+			return &ImportList{List: ss, Markup: m}
 		case token.TYPE:
-			return &TypeList{
-				List: ss,
-			}
+			return &TypeList{List: ss, Markup: m}
 		case token.VAR:
-			return &VarList{
-				List: ss,
-			}
+			return &VarList{List: ss, Markup: m}
 		}
 	case *ast.ArrayType:
 		return &Array{
@@ -568,9 +596,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			x = n.End()
 		}
 		return &File{
-			Markup: c.markup(c.file.Pos(0), n.End(), n),
-			Name:   c.nodePos(add(n.Package, lenPackage), x, n.Name).(*Name),
-			Decls:  c.decls(x, n.End(), n.Decls),
+			Markup:  c.markup(c.file.Pos(0), c.file.Pos(c.file.Size()), n),
+			Package: c.nodePos(add(n.Package, lenPackage), x, n.Name).(*Name),
+			Decls:   c.decls(x, n.End(), n.Decls),
 		}
 	case *ast.Package:
 		var fs map[string]*File

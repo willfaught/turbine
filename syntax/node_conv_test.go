@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/kr/pretty"
-
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/willfaught/turbine"
 )
@@ -48,7 +47,7 @@ func parseFileLines(content string) (*token.FileSet, *ast.File) {
 func TestConvEmpty(t *testing.T) {
 	f := parseFile("package empty")
 	a := Convert(nil, f)
-	e := &File{Name: &Name{Text: "empty"}}
+	e := &File{Package: &Name{Text: "empty"}}
 	pretty.Println(a)
 	if !reflect.DeepEqual(a, e) {
 		pretty.Ldiff(t, a, e)
@@ -69,11 +68,48 @@ package p
 }
 
 func TestCommentMap(t *testing.T) {
-	fset, f := parseFileLines(`//1
-package p
+	fset, f := parseFileLines(`package p
+
+var /*1*/ (
+
+
+	x int
+)
 `)
 	cm := ast.NewCommentMap(fset, f, f.Comments)
 	pretty.Println(cm)
+	t.FailNow()
+}
+
+func TestPrint(t *testing.T) {
+	x := &ast.ForStmt{
+		Init: &ast.EmptyStmt{Implicit: false},
+		Cond: nil,
+		Post: &ast.EmptyStmt{Implicit: false},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.BranchStmt{Tok: token.BREAK},
+				&ast.EmptyStmt{Implicit: true},
+				&ast.BranchStmt{Tok: token.BREAK},
+			},
+		},
+	}
+	b := &bytes.Buffer{}
+	if err := format.Node(b, token.NewFileSet(), x); err != nil {
+		t.Fatal(err)
+	}
+	t.Log(b.String())
+	t.FailNow()
+}
+
+func TestParse(t *testing.T) {
+	f := parseFile(`package p
+func f() {
+	for ; ; {
+	}
+}
+`)
+	pretty.Println(f)
 	t.FailNow()
 }
 
@@ -142,7 +178,7 @@ func TestConvertNodeValueExpr(t *testing.T) {
 		a := Convert(nil, f)
 		// TODO: Add newlines when supported
 		e := &File{
-			Name: &Name{Text: "p"},
+			Package: &Name{Text: "p"},
 			Decls: []Syntax{&Var{
 				Names:  []*Name{{Text: "_"}},
 				Values: []Syntax{test.syntax}},
