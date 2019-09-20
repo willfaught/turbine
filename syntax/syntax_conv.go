@@ -236,7 +236,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Rbrace: c.next(lenRbrace),
 		}
 		c.markup(from.After)
-	case *Ellipsis:
+	case *Ellipsis: // TODO: Where is this used?
 		c.markup(from.Before)
 		to = &ast.Ellipsis{
 			Ellipsis: c.next(lenEllipsis),
@@ -253,16 +253,16 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.After)
 	case *Func:
 		c.markup(from.Before)
-		var t = &ast.FuncType{
+		f := &ast.FuncType{
 			Func:    c.next(lenFunc),
 			Params:  c.node(from.Parameters).(*ast.FieldList),
 			Results: c.node(from.Results).(*ast.FieldList),
 		}
 		if from.Body == nil {
-			to = t
+			to = f
 		} else {
 			to = &ast.FuncLit{
-				Type: t,
+				Type: f,
 				Body: c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
@@ -343,12 +343,11 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.After)
 	case *Selector:
 		c.markup(from.Before)
-		to = &ast.SelectorExpr{
-			X: c.expr(from.X),
-		}
+		s := &ast.SelectorExpr{X: c.expr(from.X)}
 		c.next(lenPeriod)
-		to.(*ast.SelectorExpr).Sel = c.expr(from.Sel).(*ast.Ident)
+		s.Sel = c.expr(from.Sel).(*ast.Ident)
 		c.markup(from.After)
+		to = s
 	case *Slice:
 		c.markup(from.Before)
 		to = &ast.SliceExpr{
@@ -459,7 +458,7 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 	switch from := from.(type) {
 	case *Comment:
 		to = &ast.Comment{
-			Slash: c.next(len(from.Text)), // TODO: Insert new line?
+			Slash: c.next(len(from.Text)),
 			Text:  from.Text,
 		}
 	case *CommentGroup:
@@ -471,16 +470,20 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			List: cs,
 		}
 	case *Field:
-		var tag *ast.BasicLit
+		c.markup(from.Before)
+		f := &ast.Field{}
+		f.Names = c.idents(from.Names)
 		if b, ok := c.expr(from.Tag).(*ast.BasicLit); ok {
-			tag = b
+			f.Tag = b
 		}
-		to = &ast.Field{
-			Names: c.idents(from.Names),
-			Tag:   tag,
-			Type:  c.expr(from.Type),
-		}
+		f.Type = c.expr(from.Type)
+		to = f
+		c.markup(from.After)
 	case *FieldList:
+		if from == nil {
+			return (*ast.FieldList)(nil)
+		}
+		c.markup(from.Before)
 		if from == nil {
 			to = (*ast.FieldList)(nil)
 		} else {
@@ -494,11 +497,12 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 				Closing: c.next(1),
 			}
 		}
+		c.markup(from.After)
 	case *File:
 		if c.tokenFileSet == nil {
 			c.tokenFileSet = token.NewFileSet()
 		}
-		c.tokenFile = c.tokenFileSet.AddFile("", -1, 999999999) // TODO
+		c.tokenFile = c.tokenFileSet.AddFile("", -1, 99999999999999) // TODO
 		c.astFile = &ast.File{}
 		c.markup(from.Markup.Before)
 		c.astFile.Package = c.next(lenPackage)
@@ -512,6 +516,7 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			fs = map[string]*ast.File{}
 			for k, v := range from.Files {
 				fs[k] = c.node(v).(*ast.File)
+				break // TODO: REMOVE, FOR TESTING ONLY
 			}
 		}
 		to = &ast.Package{
@@ -602,21 +607,19 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Case:
+		c.markup(from.Before)
 		if from.Comm == nil {
-			c.markup(from.Before)
 			to = &ast.CaseClause{
 				Body: c.stmts(from.Body),
 				List: c.exprs(from.List),
 			}
-			c.markup(from.After)
 		} else {
-			c.markup(from.Before)
 			to = &ast.CommClause{
 				Body: c.stmts(from.Body),
 				Comm: c.stmt(from.Comm),
 			}
-			c.markup(from.After)
 		}
+		c.markup(from.After)
 	case *Continue:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
@@ -726,33 +729,27 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Switch:
+		c.markup(from.Before)
 		if from.Type == nil {
-			c.markup(from.Before)
 			to = &ast.SwitchStmt{
 				Body: c.stmt(from.Body).(*ast.BlockStmt),
 				Init: c.stmt(from.Init),
 				Tag:  c.expr(from.Value),
 			}
-			c.markup(from.After)
 		} else {
-			c.markup(from.Before)
 			to = &ast.TypeSwitchStmt{
 				Assign: c.stmt(from.Type),
 				Body:   c.stmt(from.Body).(*ast.BlockStmt),
 				Init:   c.stmt(from.Init),
 			}
-			c.markup(from.After)
 		}
+		c.markup(from.After)
 	default:
 		if d := c.decl(from); d != nil {
-			to = &ast.DeclStmt{
-				Decl: d,
-			}
+			to = &ast.DeclStmt{Decl: d}
 		}
 		if e := c.expr(from); e != nil {
-			to = &ast.ExprStmt{
-				X: e,
-			}
+			to = &ast.ExprStmt{X: e}
 		}
 	}
 	return to

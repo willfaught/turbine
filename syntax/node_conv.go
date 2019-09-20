@@ -115,61 +115,55 @@ func (c *nodeConv) markup(begin, end token.Pos, n ast.Node) Markup {
 		}
 	}
 	i, l := 0, len(groups)
-	for ; i < l; i++ {
+	for ; i < l; i++ { // TODO: but need to tell if first in list! -- for len(groups) > 0 { group := groups[0]; if group ... then break else groups = groups[1:]
 		group := groups[i]
 		if group.Pos() >= n.Pos() {
 			break
 		}
 		if i > 0 {
+			before = append(before, &Line{})
 			for i, lines := 0, c.file.Line(group.Pos())-c.file.Line(groups[i-1].End())-1; i < lines; i++ {
 				before = append(before, &Line{})
 			}
 		}
 		var j int
 		for j, comment = range group.List {
-			if j > 0 {
-				if prev := group.List[j-1]; prev.Text[1] == '*' && c.file.Line(prev.End()) != c.file.Line(comment.Pos()) {
-					before = append(before, &Line{})
-				}
+			if j > 0 && c.file.Line(group.List[j-1].End()) != c.file.Line(comment.Pos()) {
+				before = append(before, &Line{})
 			}
 			before = append(before, c.node(comment))
 		}
 	}
 	if comment != nil {
-		if comment.Text[1] == '*' && c.file.Line(comment.End()) != c.file.Line(n.Pos()) {
-			before = append(before, &Line{})
-		}
-		for j, lines := 0, c.file.Line(n.Pos())-c.file.Line(comment.End())-1; j < lines; j++ {
+		for j, lines := 0, c.file.Line(n.Pos())-c.file.Line(comment.End()); j < lines; j++ {
 			before = append(before, &Line{})
 		}
 	}
+	// After
 	if len(groups) > 0 {
-		for j, lines := 0, c.file.Line(groups[0].Pos())-c.file.Line(n.End())-1; j < lines; j++ {
+		for j, lines := 0, c.file.Line(groups[0].Pos())-c.file.Line(n.End()); j < lines; j++ {
 			after = append(after, &Line{})
 		}
-	}
-	comment = nil
-	groups = groups[i:]
-	l = len(groups)
-	for i = 0; i < l; i++ {
-		group := groups[i]
-		if i > 0 {
-			for i, lines := 0, c.file.Line(group.Pos())-c.file.Line(groups[i-1].End())-1; i < lines; i++ {
+		groups = groups[i:]
+		for i, l = 0, len(groups); i < l; i++ {
+			group := groups[i]
+			if i > 0 {
 				after = append(after, &Line{})
-			}
-		}
-		var j int
-		for j, comment = range group.List {
-			if j > 0 {
-				if prev := group.List[j-1]; prev.Text[1] == '*' && c.file.Line(prev.End()) != c.file.Line(comment.Pos()) {
+				for i, lines := 0, c.file.Line(group.Pos())-c.file.Line(groups[i-1].End())-1; i < lines; i++ {
 					after = append(after, &Line{})
 				}
 			}
-			after = append(after, c.node(comment))
+			var j int
+			for j, comment = range group.List {
+				if j > 0 && c.file.Line(group.List[j-1].End()) != c.file.Line(comment.Pos()) {
+					after = append(after, &Line{})
+				}
+				after = append(after, c.node(comment), &Line{})
+			}
 		}
 	}
 	if end != token.NoPos { // TODO: Perhaps not needed if all of nodePos() calls markup()?
-		for j, lines := 0, c.file.Line(end-1)-c.file.Line(c.nodeEnd(n)); j < lines; j++ { // end-1 because end is a go/ast.Node.End
+		for j, lines := 0, c.file.Line(end-1)-c.file.Line(c.nodeEnd(n)-1); j < lines; j++ { // end-1 because end is a go/ast.Node.End
 			after = append(after, &Line{})
 		}
 	}
@@ -350,11 +344,13 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			// TODO: Capture lines between specs
 			switch spec := spec.(type) {
 			case *ast.ImportSpec:
-				syn = &Import{
-					Markup: c.markup(specBegin, specEnd, spec),
-					Name:   maybeName(c.nodePos(spec.Name.Pos(), spec.Path.Pos(), spec.Name)),
-					Path:   c.nodePos(c.nodeBegin(spec.Path), c.nodeEnd(spec.Path), spec.Path).(*String),
+				im := &Import{}
+				im.Markup = c.markup(specBegin, specEnd, spec)
+				if spec.Name != nil {
+					im.Name = c.nodePos(spec.Name.Pos(), spec.Path.Pos(), spec.Name).(*Name)
 				}
+				im.Path = c.nodePos(c.nodeBegin(spec.Path), c.nodeEnd(spec.Path), spec.Path).(*String)
+				syn = im
 			case *ast.TypeSpec:
 				syn = &Type{
 					Assign: spec.Assign,

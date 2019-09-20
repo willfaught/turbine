@@ -9,7 +9,7 @@ import (
 	"go/types"
 	"os"
 
-	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/loader" // TODO: Use tools/.../go/packages
 )
 
 // Load returns the package for the import path using BuildLoader.
