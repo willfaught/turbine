@@ -55,6 +55,33 @@ func TestConvEmpty(t *testing.T) {
 	t.FailNow()
 }
 
+func TestConv(t *testing.T) {
+	stdStr := `package p
+
+func f() {
+ g()
+}
+`
+	stdFset, stdFile := parseFileLines(stdStr)
+	pretty.Println("stdFile", stdFile)
+	pretty.Println("stdFset", stdFset)
+	synFile := Convert(stdFset, stdFile)
+	pretty.Println("synFile", synFile)
+	nodeFset := token.NewFileSet()
+	sc := &syntaxConv{tokenFileSet: nodeFset}
+	nodeFile := sc.node(synFile).(*ast.File)
+	pretty.Println("nodeFile", nodeFile)
+	pretty.Println("nodeFset", nodeFset)
+	synBuf := &bytes.Buffer{}
+	if err := format.Node(synBuf, nodeFset, nodeFile); err != nil {
+		t.Fatal(err)
+	}
+	synStr := synBuf.String()
+	t.Logf("syn:\n%#v\nstd:\n%#v\n", synStr, stdStr)
+	t.Log(diff.LineDiff(synStr, stdStr))
+	t.FailNow()
+}
+
 func TestLines(t *testing.T) {
 	fset, _ := parseFileLines(`//1
 package p

@@ -163,7 +163,7 @@ func (c *nodeConv) markup(begin, end token.Pos, n ast.Node) Markup {
 		}
 	}
 	if end != token.NoPos { // TODO: Perhaps not needed if all of nodePos() calls markup()?
-		for j, lines := 0, c.file.Line(end-1)-c.file.Line(c.nodeEnd(n)-1); j < lines; j++ { // end-1 because end is a go/ast.Node.End
+		for j, lines := 0, c.file.Line(end)-c.file.Line(c.nodeEnd(n)-1); j < lines; j++ {
 			after = append(after, &Line{})
 		}
 	}
@@ -172,6 +172,26 @@ func (c *nodeConv) markup(begin, end token.Pos, n ast.Node) Markup {
 
 func (c *nodeConv) node(n ast.Node) Syntax {
 	return c.nodePos(token.NoPos, token.NoPos, n)
+}
+
+func (c *nodeConv) afterComments(n ast.Node) []*ast.CommentGroup {
+	groups := c.comments[n]
+	for i, g := range groups {
+		if g.Pos() > n.Pos() {
+			return groups[i:]
+		}
+	}
+	return nil
+}
+
+func (c *nodeConv) beforeComments(n ast.Node) []*ast.CommentGroup {
+	groups := c.comments[n]
+	for i, g := range groups {
+		if g.Pos() > n.Pos() {
+			return groups[:i]
+		}
+	}
+	return groups
 }
 
 func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
@@ -190,9 +210,10 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		if n == nil {
 			return nil
 		}
-		return &Block{
-			List: c.stmts(n.List),
-		}
+		s := &Block{}
+		s.Markup = c.markup(begin, end, n)
+		s.List = c.stmts(n.Lbrace+1, n.Rbrace, n.List)
+		return s
 	case *ast.BranchStmt:
 		switch n.Tok {
 		case token.BREAK:
@@ -219,7 +240,7 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 	case *ast.EmptyStmt:
 		return &Empty{}
 	case *ast.ExprStmt:
-		return c.node(n.X)
+		return c.nodePos(begin, end, n.X)
 	case *ast.ForStmt:
 		return &For{
 			Init: c.node(n.Init),
@@ -305,13 +326,35 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 	case *ast.BadDecl:
 		return nil
 	case *ast.FuncDecl:
-		return &Func{
-			Body:       maybeBlock(c.node(n.Body)),
-			Name:       c.node(n.Name).(*Name),
-			Parameters: c.node(n.Type.Params).(*FieldList),
-			Receiver:   c.node(n.Recv).(*FieldList),
-			Results:    c.node(n.Type.Results).(*FieldList),
+		s := &Func{}
+		s.Markup = c.markup(begin, end, n)
+		if n.Recv != nil {
+			s.Receiver = c.nodePos(add(n.Type.Func, lenFunc), c.nodeBegin(n.Name), n.Recv).(*FieldList)
+			s.Name = c.nodePos(c.nodeBegin(n.Name), c.nodeBegin(n.Type), n.Name).(*Name)
+		} else {
+			s.Name = c.nodePos(add(n.Type.Func, lenFunc), c.nodeBegin(n.Type), n.Name).(*Name)
 		}
+		var p token.Pos
+		if n.Type.Results == nil && n.Body == nil {
+			p = c.nodeEnd(n.Type.Params)
+		} else if n.Type.Results != nil {
+			p = c.nodeBegin(n.Type.Results)
+		} else {
+			p = c.nodeBegin(n.Body)
+		}
+		s.Parameters = c.nodePos(c.nodeBegin(n.Type.Params), p, n.Type.Params).(*FieldList)
+		if n.Type.Results != nil {
+			if n.Body == nil {
+				p = c.nodeEnd(n.Type.Results)
+			} else {
+				p = c.nodeBegin(n.Body)
+			}
+			s.Results = c.nodePos(n.Type.Results.Pos(), p, n.Type.Results).(*FieldList)
+		}
+		if n.Body != nil {
+			s.Body = c.nodePos(c.nodeBegin(n.Body), c.nodeEnd(n.Body), n.Body).(*Block)
+		}
+		return s
 	case *ast.GenDecl:
 		m := c.markup(begin, end, n)
 		// TODO: Capture comments and lines between n.Tok and n.Lparen
@@ -324,7 +367,7 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 		var ss []Syntax
 		for i, spec := range n.Specs {
-			var syn Syntax
+			var s Syntax
 			var specBegin, specEnd token.Pos
 			if i == 0 {
 				specBegin = begin
@@ -347,36 +390,38 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 				im := &Import{}
 				im.Markup = c.markup(specBegin, specEnd, spec)
 				if spec.Name != nil {
-					im.Name = c.nodePos(spec.Name.Pos(), spec.Path.Pos(), spec.Name).(*Name)
+					im.Name = c.nodePos(c.nodeBegin(spec.Name), c.nodeBegin(spec.Path), spec.Name).(*Name)
 				}
 				im.Path = c.nodePos(c.nodeBegin(spec.Path), c.nodeEnd(spec.Path), spec.Path).(*String)
-				syn = im
+				s = im
 			case *ast.TypeSpec:
-				syn = &Type{
-					Assign: spec.Assign,
+				s = &Type{
 					Markup: c.markup(specBegin, specEnd, spec),
 					Name:   c.node(spec.Name).(*Name),
+					Assign: spec.Assign,
 					Type:   c.node(spec.Type),
 				}
 			case *ast.ValueSpec:
 				switch n.Tok {
 				case token.CONST:
-					syn = &Const{
+					s = &Const{
 						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
 						Type:   c.node(spec.Type),
 						Values: c.exprs(spec.Values),
 					}
 				case token.VAR:
-					syn = &Var{
+					s = &Var{
 						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
 						Type:   c.node(spec.Type),
 						Values: c.exprs(spec.Values),
 					}
+				default:
+					panic(n.Tok)
 				}
 			}
-			ss = append(ss, syn)
+			ss = append(ss, s)
 		}
 		if n.Lparen == token.NoPos {
 			return ss[0]
@@ -433,11 +478,12 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			Y:        c.node(n.Y),
 		}
 	case *ast.CallExpr:
-		return &Call{
-			Args:     c.exprs(n.Args),
-			Ellipsis: n.Ellipsis != token.NoPos,
-			Fun:      c.node(n.Fun),
-		}
+		s := &Call{}
+		s.Markup = c.markup(begin, end, n)
+		s.Fun = c.nodePos(c.nodeBegin(n.Fun), n.Lparen, n.Fun)
+		s.Args = c.exprs(n.Args)
+		s.Ellipsis = n.Ellipsis != token.NoPos
+		return s
 	case *ast.ChanType:
 		switch n.Dir {
 		case ast.RECV:
@@ -478,7 +524,8 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			return nil
 		}
 		return &Name{
-			Text: n.Name,
+			Markup: c.markup(begin, end, n),
+			Text:   n.Name,
 		}
 	case *ast.IndexExpr:
 		return &Index{
@@ -536,12 +583,12 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.CaseClause:
 		return &Case{
-			Body: c.stmts(n.Body),
+			Body: c.stmts(token.NoPos, token.NoPos, n.Body),
 			List: c.exprs(n.List),
 		}
 	case *ast.CommClause:
 		return &Case{
-			Body: c.stmts(n.Body),
+			Body: c.stmts(token.NoPos, token.NoPos, n.Body),
 			Comm: c.node(n.Comm),
 		}
 	case *ast.Comment:
@@ -557,26 +604,41 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			List: cs,
 		}
 	case *ast.Field:
-		var tag *String
-		if b, ok := c.node(n.Tag).(*String); ok {
-			tag = b
+		s := &Field{}
+		s.Markup = c.markup(begin, end, n)
+		s.Names = c.idents(n.Names)
+		s.Type = c.node(n.Type)
+		if n.Tag != nil {
+			s.Tag = c.node(n.Tag).(*String)
 		}
-		return &Field{
-			Names: c.idents(n.Names),
-			Tag:   tag,
-			Type:  c.node(n.Type),
-		}
+		return s
 	case *ast.FieldList:
 		if n == nil {
 			return (*FieldList)(nil)
 		}
-		var fs []*Field
-		for _, f := range n.List {
-			fs = append(fs, c.node(f).(*Field))
+		s := &FieldList{}
+		s.Markup = c.markup(begin, end, n)
+		s.List = make([]*Field, len(n.List))
+		for i, f := range n.List {
+			var fieldBegin, fieldEnd token.Pos
+			if i == 0 {
+				fieldBegin = begin
+				if len(n.List) > 1 {
+					fieldEnd = c.nodeBegin(n.List[1])
+				} else {
+					fieldEnd = end
+				}
+			} else {
+				fieldBegin = c.nodeBegin(f)
+				if i == len(n.List)-1 {
+					fieldEnd = end
+				} else {
+					fieldEnd = c.nodeBegin(n.List[i+1])
+				}
+			}
+			s.List[i] = c.nodePos(fieldBegin, fieldEnd, f).(*Field)
 		}
-		return &FieldList{
-			List: fs,
-		}
+		return s
 	case *ast.File:
 		// TODO
 		// doc
@@ -585,17 +647,19 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		// decls
 		c.comments = ast.NewCommentMap(c.tokens, n, n.Comments)
 		c.file = c.tokens.File(n.Pos())
-		var x token.Pos
-		if l := len(n.Decls); l > 0 {
-			x = c.nodeBegin(n.Decls[0])
+		s := &File{}
+		s.Markup = c.markup(c.file.Pos(0), c.file.Pos(c.file.Size()), n)
+		var p token.Pos
+		if len(n.Decls) > 0 {
+			p = c.nodeBegin(n.Decls[0])
 		} else {
-			x = n.End()
+			p = c.nodeEnd(n.Name)
 		}
-		return &File{
-			Markup:  c.markup(c.file.Pos(0), c.file.Pos(c.file.Size()), n),
-			Package: c.nodePos(add(n.Package, lenPackage), x, n.Name).(*Name),
-			Decls:   c.decls(x, n.End(), n.Decls),
+		s.Package = c.nodePos(add(n.Package, lenPackage), p, n.Name).(*Name)
+		if len(n.Decls) > 0 {
+			s.Decls = c.decls(p, c.nodeEnd(n.Decls[len(n.Decls)-1]), n.Decls)
 		}
+		return s
 	case *ast.Package:
 		var fs map[string]*File
 		if n.Files != nil {
@@ -626,13 +690,29 @@ func (c *nodeConv) specs(from []ast.Spec) []Syntax {
 	return to
 }
 
-func (c *nodeConv) stmts(from []ast.Stmt) []Syntax {
+func (c *nodeConv) stmts(begin, end token.Pos, from []ast.Stmt) []Syntax {
 	if len(from) == 0 {
 		return nil
 	}
 	to := make([]Syntax, len(from))
 	for i, f := range from {
-		to[i] = c.node(f)
+		var stmtBegin, stmtEnd token.Pos
+		if i == 0 {
+			stmtBegin = begin
+			if len(from) > 1 {
+				stmtEnd = c.nodeBegin(from[1])
+			} else {
+				stmtEnd = end
+			}
+		} else {
+			stmtBegin = c.nodeBegin(f)
+			if i == len(from)-1 {
+				stmtEnd = end
+			} else {
+				stmtEnd = c.nodeBegin(from[i+1])
+			}
+		}
+		to[i] = c.nodePos(stmtBegin, stmtEnd, f)
 	}
 	return to
 }
