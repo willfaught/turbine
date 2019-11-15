@@ -795,9 +795,9 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 	case *Type:
 		c.markup(from.Before)
 		to = &ast.TypeSpec{
-			Assign: from.Assign,
-			Name:   c.expr(from.Name).(*ast.Ident),
-			Type:   c.expr(from.Type),
+			// Assign: from.Assign,
+			Name: c.expr(from.Name).(*ast.Ident),
+			Type: c.expr(from.Type),
 		}
 		c.markup(from.After)
 	case *Var:
@@ -830,19 +830,105 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
-
 	case *AddAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.ADD_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *SubtractAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SUB_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *MultiplyAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.MUL_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *DivideAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.QUO_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *ModuloAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.REM_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *BitAndAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.AND_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *BitOrAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.OR_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *XorAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.XOR_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *ShiftLeftAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SHL_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *ShiftRightAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SHR_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *AndNotAssign:
-
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.AND_NOT_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *Block:
 		if from != nil {
 			c.markup(from.Before)
@@ -985,9 +1071,9 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	case *Send:
 		c.markup(from.Before)
 		to = &ast.SendStmt{
-			// TODO:
-			// Chan:  c.expr(from.Chan),
-			// Value: c.expr(from.Value),
+		// TODO:
+		// Chan:  c.expr(from.Chan),
+		// Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
 	case *Switch:

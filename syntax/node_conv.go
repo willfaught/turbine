@@ -200,9 +200,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		return nil
 	case *ast.AssignStmt:
 		return &Assign{
-			Left: c.exprs(n.Lhs),
-			// TODO: Operator: n.Tok,
-			Right: c.exprs(n.Rhs),
+		// Left: c.exprs(n.Lhs),
+		// TODO: Operator: n.Tok,
+		// Right: c.exprs(n.Rhs),
 		}
 	case *ast.BadStmt:
 		return nil // TODO
@@ -314,9 +314,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.TypeSpec:
 		return &Type{
-			Assign: n.Assign,
-			Name:   c.node(n.Name).(*Name),
-			Type:   c.node(n.Type),
+			// Assign: n.Assign,
+			Name: c.node(n.Name).(*Name),
+			Type: c.node(n.Type),
 		}
 	case *ast.ValueSpec:
 		return &Const{
@@ -399,8 +399,8 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 				s = &Type{
 					Markup: c.markup(specBegin, specEnd, spec),
 					Name:   c.node(spec.Name).(*Name),
-					Assign: spec.Assign,
-					Type:   c.node(spec.Type),
+					// Assign: spec.Assign,
+					Type: c.node(spec.Type),
 				}
 			case *ast.ValueSpec:
 				switch n.Tok {
@@ -439,8 +439,8 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.ArrayType:
 		return &Array{
-			Element: c.node(n.Elt),
-			Length:  c.node(n.Len),
+		// Element: c.node(n.Elt),
+		// Length:  c.node(n.Len),
 		}
 	case *ast.BadExpr:
 		return nil
@@ -576,8 +576,8 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.TypeAssertExpr:
 		return &Assert{
-			Type: c.node(n.Type),
-			X:    c.node(n.X),
+		// Type: c.node(n.Type),
+		// X:    c.node(n.X),
 		}
 	case *ast.UnaryExpr:
 		// TODO

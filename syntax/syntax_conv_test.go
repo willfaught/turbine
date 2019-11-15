@@ -31,26 +31,50 @@ func TestSyntax(t *testing.T) {
 				Name: &Name{Text: "f"},
 				Body: &Block{
 					List: []Syntax{
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Add{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Subtract{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Multiply{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Divide{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Modulo{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&BitAnd{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&BitOr{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&And{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Or{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Xor{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&ShiftLeft{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&ShiftRight{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&AndNot{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Send{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Equal{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&NotEqual{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Less{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&LessEqual{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&Greater{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
-						&Assign{Left: []Syntax{&Name{Text: "_"}}, Right: []Syntax{&GreaterEqual{X: &Name{Text: "x"}, Y: &Name{Text: "y"}}}},
+						&If{
+							Init: &Define{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Int{Text: "123"}}},
+							Cond: &Less{X: &Name{Text: "x"}, Y: &Name{Text: "y"}},
+							Body: &Block{
+								List: []Syntax{
+									&Assign{Left: []Syntax{&Name{Text: "y"}}, Right: []Syntax{&Name{Text: "x"}}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	fset, n := ConvertFile(s)
+	// pretty.Println(fset, n)
+	if err := format.Node(os.Stdout, fset, n); err != nil {
+		t.Error(err)
+	}
+	t.FailNow()
+}
+
+func TestXAssignSyntax(t *testing.T) {
+	s := &File{
+		Package: &Name{
+			Text: "main",
+		},
+		Decls: []Syntax{
+			&Func{
+				Name: &Name{Text: "f"},
+				Body: &Block{
+					List: []Syntax{
+						&Assign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&AddAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&SubtractAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&MultiplyAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&DivideAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&ModuloAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&XorAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&BitAndAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&BitOrAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&ShiftLeftAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&ShiftRightAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
+						&AndNotAssign{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Name{Text: "y"}}},
 					},
 				},
 			},
