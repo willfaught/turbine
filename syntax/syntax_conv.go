@@ -1,16 +1,21 @@
 package syntax
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/token"
 )
 
 var (
+	lenAnd       = len(token.AND.String())
 	lenArrow     = len(token.ARROW.String())
+	lenAssign    = len(token.ASSIGN.String())
 	lenChan      = len(token.CHAN.String())
 	lenColon     = len(token.COLON.String())
 	lenConst     = len(token.CONST.String())
+	lenDefine    = len(token.DEFINE.String())
 	lenEllipsis  = len(token.ELLIPSIS.String())
 	lenFunc      = len(token.FUNC.String())
 	lenImport    = len(token.IMPORT.String())
@@ -31,6 +36,21 @@ var (
 	lenType      = len(token.TYPE.String())
 	lenVar       = len(token.VAR.String())
 )
+
+func ConvertFile(f *File) (*token.FileSet, *ast.File) {
+	var c syntaxConv
+	n := c.node(f)
+	return c.tokenFileSet, n.(*ast.File)
+}
+
+func MustFileString(f *File) string {
+	fset, n := ConvertFile(f)
+	b := &bytes.Buffer{}
+	if err := format.Node(b, fset, n); err != nil {
+		panic(err)
+	}
+	return b.String()
+}
 
 func convertSyntax(s Syntax) ast.Node {
 	var c syntaxConv
@@ -83,12 +103,16 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 	case *Func:
 		c.markup(from.Before)
 		funcPos := c.next(lenFunc)
+		params := from.Parameters
+		if params == nil {
+			params = &FieldList{}
+		}
 		to = &ast.FuncDecl{
 			Recv: c.node(from.Receiver).(*ast.FieldList),
 			Name: c.expr(from.Name).(*ast.Ident),
 			Type: &ast.FuncType{
 				Func:    funcPos,
-				Params:  c.node(from.Parameters).(*ast.FieldList),
+				Params:  c.node(params).(*ast.FieldList),
 				Results: c.node(from.Results).(*ast.FieldList),
 			},
 			Body: blockStmt(c.stmt(from.Body)),
@@ -182,12 +206,183 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Rparen: c.next(lenRparen),
 		}
 		c.markup(from.After)
-	case *Binary:
+	case *Add:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(len(from.Operator.String())),
-			Op:    from.Operator,
+			OpPos: c.next(1),
+			Op:    token.ADD,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Subtract:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.SUB,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Multiply:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.MUL,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Divide:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.QUO,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Modulo:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.REM,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *BitAnd:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.AND,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *BitOr:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.OR,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *And:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.LAND,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Or:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.LOR,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Xor:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.XOR,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *ShiftLeft:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.SHL,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *ShiftRight:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.SHR,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *AndNot:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.AND_NOT,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Send:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.ARROW,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Equal:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.EQL,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *NotEqual:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.NEQ,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Less:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.LSS,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *LessEqual:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.LEQ,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *Greater:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(1),
+			Op:    token.GTR,
+			Y:     c.expr(from.Y),
+		}
+		c.markup(from.After)
+	case *GreaterEqual:
+		c.markup(from.Before)
+		to = &ast.BinaryExpr{
+			X:     c.expr(from.X),
+			OpPos: c.next(2),
+			Op:    token.GEQ,
 			Y:     c.expr(from.Y),
 		}
 		c.markup(from.After)
@@ -325,6 +520,14 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Name:    from.Text,
 		}
 		c.markup(from.After)
+	case *Negate:
+		c.markup(from.Before)
+		to = &ast.UnaryExpr{
+			OpPos: c.next(len(token.SUB.String())),
+			Op:    token.SUB,
+			X:     c.expr(from.X),
+		}
+		c.markup(from.After)
 	case *Paren:
 		c.markup(from.Before)
 		to = &ast.ParenExpr{
@@ -379,21 +582,59 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Incomplete: false, // TODO
 		}
 		c.markup(from.After)
-	case *Unary:
+	case *Pointer:
 		c.markup(from.Before)
-		if from.Operator == token.MUL {
-			to = &ast.StarExpr{
-				Star: c.next(lenMul),
-				X:    c.expr(from.X),
-			}
-		} else {
-			to = &ast.UnaryExpr{
-				OpPos: c.next(len(from.Operator.String())),
-				Op:    from.Operator,
-				X:     c.expr(from.X),
-			}
+		to = &ast.StarExpr{
+			Star: c.next(lenMul),
+			X:    c.expr(from.X),
 		}
 		c.markup(from.After)
+	case *Ref:
+		c.markup(from.Before)
+		to = &ast.UnaryExpr{
+			OpPos: c.next(lenAnd),
+			Op:    token.AND,
+			X:     c.expr(from.X),
+		}
+		c.markup(from.After)
+	case *Deref:
+		c.markup(from.Before)
+		to = &ast.StarExpr{
+			Star: c.next(lenMul),
+			X:    c.expr(from.X),
+		}
+		c.markup(from.After)
+	case *Receive:
+		c.markup(from.Before)
+		to = &ast.UnaryExpr{
+			OpPos: c.next(len(token.ARROW.String())),
+			Op:    token.ARROW,
+			X:     c.expr(from.X),
+		}
+		c.markup(from.After)
+	case *Not:
+		c.markup(from.Before)
+		to = &ast.UnaryExpr{
+			OpPos: c.next(len(token.NOT.String())),
+			Op:    token.NOT,
+			X:     c.expr(from.X),
+		}
+		c.markup(from.After)
+		// case *Unary:
+		// 	c.markup(from.Before)
+		// 	if from.Operator == token.MUL {
+		// 		to = &ast.StarExpr{
+		// 			Star: c.next(lenMul),
+		// 			X:    c.expr(from.X),
+		// 		}
+		// 	} else {
+		// 		to = &ast.UnaryExpr{
+		// 			OpPos: c.next(len(from.Operator.String())),
+		// 			Op:    from.Operator,
+		// 			X:     c.expr(from.X),
+		// 		}
+		// 	}
+		// 	c.markup(from.After)
 	}
 	return to
 }
@@ -481,12 +722,9 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.After)
 	case *FieldList:
 		if from == nil {
-			return (*ast.FieldList)(nil)
-		}
-		c.markup(from.Before)
-		if from == nil {
 			to = (*ast.FieldList)(nil)
 		} else {
+			c.markup(from.Before)
 			var fs []*ast.Field
 			for _, f := range from.List {
 				fs = append(fs, c.node(f).(*ast.Field))
@@ -496,8 +734,8 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 				List:    fs,
 				Closing: c.next(1),
 			}
+			c.markup(from.After)
 		}
-		c.markup(from.After)
 	case *File:
 		if c.tokenFileSet == nil {
 			c.tokenFileSet = token.NewFileSet()
@@ -586,11 +824,25 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	case *Assign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
-			Lhs: c.exprs(from.Left),
-			Rhs: c.exprs(from.Right),
-			Tok: from.Operator,
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.ASSIGN,
+			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
+
+	case *AddAssign:
+	case *SubtractAssign:
+	case *MultiplyAssign:
+	case *DivideAssign:
+	case *ModuloAssign:
+	case *BitAndAssign:
+	case *BitOrAssign:
+	case *XorAssign:
+	case *ShiftLeftAssign:
+	case *ShiftRightAssign:
+	case *AndNotAssign:
+
 	case *Block:
 		if from != nil {
 			c.markup(from.Before)
@@ -638,6 +890,15 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.DeferStmt{
 			Call: c.expr(from.Call).(*ast.CallExpr),
+		}
+		c.markup(from.After)
+	case *Define:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenDefine),
+			Tok:    token.DEFINE,
+			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
 	case *Empty:
@@ -724,8 +985,9 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	case *Send:
 		c.markup(from.Before)
 		to = &ast.SendStmt{
-			Chan:  c.expr(from.Chan),
-			Value: c.expr(from.Value),
+			// TODO:
+			// Chan:  c.expr(from.Chan),
+			// Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
 	case *Switch:

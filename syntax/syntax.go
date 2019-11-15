@@ -1,115 +1,9 @@
 package syntax
 
-import (
-	"bytes"
-	"go/ast"
-	"go/format"
-	"go/token"
-)
+import "go/token"
 
 // Syntax is a simpler syntax that converts to nodes.
-type Syntax interface {
-	// Node() ast.Node
-}
-
-func ConvertFile(f *File) (*token.FileSet, *ast.File) {
-	var c syntaxConv
-	n := c.node(f)
-	return c.tokenFileSet, n.(*ast.File)
-}
-
-func MustFileString(f *File) string {
-	fset, n := ConvertFile(f)
-	b := &bytes.Buffer{}
-	if err := format.Node(b, fset, n); err != nil {
-		panic(err)
-	}
-	return b.String()
-}
-
-func (a *Array) Node() ast.Node        { return convertSyntax(a) }
-func (a *Assert) Node() ast.Node       { return convertSyntax(a) }
-func (a *Assign) Node() ast.Node       { return convertSyntax(a) }
-func (b *Binary) Node() ast.Node       { return convertSyntax(b) }
-func (b *Block) Node() ast.Node        { return convertSyntax(b) }
-func (b *Break) Node() ast.Node        { return convertSyntax(b) }
-func (c *Call) Node() ast.Node         { return convertSyntax(c) }
-func (c *Case) Node() ast.Node         { return convertSyntax(c) }
-func (c *Chan) Node() ast.Node         { return convertSyntax(c) }
-func (c *ChanIn) Node() ast.Node       { return convertSyntax(c) }
-func (c *ChanOut) Node() ast.Node      { return convertSyntax(c) }
-func (c *Comment) Node() ast.Node      { return convertSyntax(c) }
-func (c *CommentGroup) Node() ast.Node { return convertSyntax(c) }
-func (c *Composite) Node() ast.Node    { return convertSyntax(c) }
-func (c *Const) Node() ast.Node        { return convertSyntax(c) }
-func (c *ConstList) Node() ast.Node    { return convertSyntax(c) }
-func (c *Continue) Node() ast.Node     { return convertSyntax(c) }
-func (d *Dec) Node() ast.Node          { return convertSyntax(d) }
-func (d *Defer) Node() ast.Node        { return convertSyntax(d) }
-func (e *Ellipsis) Node() ast.Node     { return convertSyntax(e) }
-func (e *Empty) Node() ast.Node        { return convertSyntax(e) }
-func (f *Fallthrough) Node() ast.Node  { return convertSyntax(f) }
-func (f *Field) Node() ast.Node        { return convertSyntax(f) }
-func (f *FieldList) Node() ast.Node    { return convertSyntax(f) }
-func (f *File) Node() ast.Node         { return convertSyntax(f) }
-func (f *Float) Node() ast.Node        { return convertSyntax(f) }
-func (f *For) Node() ast.Node          { return convertSyntax(f) }
-func (f *Func) Node() ast.Node         { return convertSyntax(f) }
-func (g *Go) Node() ast.Node           { return convertSyntax(g) }
-func (g *Goto) Node() ast.Node         { return convertSyntax(g) }
-func (i *If) Node() ast.Node           { return convertSyntax(i) }
-func (i *Imag) Node() ast.Node         { return convertSyntax(i) }
-func (i *Import) Node() ast.Node       { return convertSyntax(i) }
-func (i *ImportList) Node() ast.Node   { return convertSyntax(i) }
-func (i *Inc) Node() ast.Node          { return convertSyntax(i) }
-func (i *Index) Node() ast.Node        { return convertSyntax(i) }
-func (i *Int) Node() ast.Node          { return convertSyntax(i) }
-func (i *Interface) Node() ast.Node    { return convertSyntax(i) }
-func (k *KeyValue) Node() ast.Node     { return convertSyntax(k) }
-func (l *Label) Node() ast.Node        { return convertSyntax(l) }
-func (l *Line) Node() ast.Node         { return convertSyntax(l) }
-func (m *Map) Node() ast.Node          { return convertSyntax(m) }
-func (m *Markup) Node() ast.Node       { return convertSyntax(m) }
-func (n *Name) Node() ast.Node         { return convertSyntax(n) }
-func (p *Package) Node() ast.Node      { return convertSyntax(p) }
-func (p *Paren) Node() ast.Node        { return convertSyntax(p) }
-func (r *Range) Node() ast.Node        { return convertSyntax(r) }
-func (r *Return) Node() ast.Node       { return convertSyntax(r) }
-func (r *Rune) Node() ast.Node         { return convertSyntax(r) }
-func (s *Select) Node() ast.Node       { return convertSyntax(s) }
-func (s *Selector) Node() ast.Node     { return convertSyntax(s) }
-func (s *Send) Node() ast.Node         { return convertSyntax(s) }
-func (s *Slice) Node() ast.Node        { return convertSyntax(s) }
-func (s *String) Node() ast.Node       { return convertSyntax(s) }
-func (s *Struct) Node() ast.Node       { return convertSyntax(s) }
-func (s *Switch) Node() ast.Node       { return convertSyntax(s) }
-func (t *Type) Node() ast.Node         { return convertSyntax(t) }
-func (t *TypeList) Node() ast.Node     { return convertSyntax(t) }
-func (u *Unary) Node() ast.Node        { return convertSyntax(u) }
-func (v *Var) Node() ast.Node          { return convertSyntax(v) }
-func (v *VarList) Node() ast.Node      { return convertSyntax(v) }
-
-type GenDecl struct {
-	Tok   token.Token
-	Specs []Spec
-}
-
-type Spec interface{}
-
-type ImportSpec struct {
-	Name    *Ident
-	Path    *BasicLit
-	Comment *CommentGroup
-}
-
-type BasicLit struct {
-	Kind  token.Token
-	Value string
-}
-
-type Ident struct {
-	Name string
-}
+type Syntax interface{}
 
 type Array struct {
 	Markup
@@ -125,16 +19,200 @@ type Assert struct {
 
 type Assign struct {
 	Markup
-	Left     []Syntax
-	Operator token.Token
-	Right    []Syntax
+	Left  []Syntax
+	Right []Syntax
 }
 
-type Binary struct {
+type Define struct {
 	Markup
-	X        Syntax
-	Operator token.Token
-	Y        Syntax
+	Left  []Syntax
+	Right []Syntax
+}
+
+type Add struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Subtract struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Multiply struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Divide struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Modulo struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type BitAnd struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type BitOr struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type And struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Or struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Xor struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type ShiftLeft struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type ShiftRight struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type AndNot struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Send struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Equal struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type NotEqual struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Less struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type LessEqual struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type Greater struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type GreaterEqual struct {
+	Markup
+	X Syntax
+	Y Syntax
+}
+
+type AddAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type SubtractAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type MultiplyAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type DivideAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type ModuloAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type BitAndAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type BitOrAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type XorAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type ShiftLeftAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type ShiftRightAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
+}
+
+type AndNotAssign struct {
+	Markup
+	Left  []Syntax
+	Right []Syntax
 }
 
 type Block struct {
@@ -395,12 +473,6 @@ type Selector struct {
 	Sel *Name
 }
 
-type Send struct {
-	Markup
-	Chan  Syntax
-	Value Syntax
-}
-
 type Slice struct {
 	Markup
 	X    Syntax
@@ -446,10 +518,34 @@ type TypeList struct {
 	List    []Syntax
 }
 
-type Unary struct {
+type Pointer struct {
 	Markup
-	Operator token.Token
-	X        Syntax
+	X Syntax
+}
+
+type Ref struct {
+	Markup
+	X Syntax
+}
+
+type Deref struct {
+	Markup
+	X Syntax
+}
+
+type Negate struct {
+	Markup
+	X Syntax
+}
+
+type Receive struct {
+	Markup
+	X Syntax
+}
+
+type Not struct {
+	Markup
+	X Syntax
 }
 
 type Var struct {

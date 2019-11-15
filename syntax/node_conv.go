@@ -200,9 +200,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		return nil
 	case *ast.AssignStmt:
 		return &Assign{
-			Left:     c.exprs(n.Lhs),
-			Operator: n.Tok,
-			Right:    c.exprs(n.Rhs),
+			Left: c.exprs(n.Lhs),
+			// TODO: Operator: n.Tok,
+			Right: c.exprs(n.Rhs),
 		}
 	case *ast.BadStmt:
 		return nil // TODO
@@ -290,10 +290,11 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			Body: c.node(n.Body).(*Block),
 		}
 	case *ast.SendStmt:
-		return &Send{
-			Chan:  c.node(n.Chan),
-			Value: c.node(n.Value),
-		}
+		// TODO:
+		// return &Send{
+		// 	Chan:  c.node(n.Chan),
+		// 	Value: c.node(n.Value),
+		// }
 	case *ast.SwitchStmt:
 		return &Switch{
 			Body:  c.node(n.Body).(*Block),
@@ -472,11 +473,12 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			panic(n) // TODO
 		}
 	case *ast.BinaryExpr:
-		return &Binary{
-			Operator: n.Op,
-			X:        c.node(n.X),
-			Y:        c.node(n.Y),
-		}
+		// TODO:
+		// return &Binary{
+		// 	Operator: n.Op,
+		// 	X:        c.node(n.X),
+		// 	Y:        c.node(n.Y),
+		// }
 	case *ast.CallExpr:
 		s := &Call{}
 		s.Markup = c.markup(begin, end, n)
@@ -563,10 +565,11 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			X:    c.node(n.X),
 		}
 	case *ast.StarExpr:
-		return &Unary{
-			Operator: token.MUL,
-			X:        c.node(n.X),
-		}
+		// TODO
+		// return &Unary{
+		// 	Operator: token.MUL,
+		// 	X:        c.node(n.X),
+		// }
 	case *ast.StructType:
 		return &Struct{
 			Fields: c.node(n.Fields).(*FieldList),
@@ -577,10 +580,11 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			X:    c.node(n.X),
 		}
 	case *ast.UnaryExpr:
-		return &Unary{
-			Operator: n.Op,
-			X:        c.node(n.X),
-		}
+		// TODO
+		// return &Unary{
+		// 	Operator: n.Op,
+		// 	X:        c.node(n.X),
+		// }
 	case *ast.CaseClause:
 		return &Case{
 			Body: c.stmts(token.NoPos, token.NoPos, n.Body),
