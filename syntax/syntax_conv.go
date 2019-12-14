@@ -22,6 +22,7 @@ var (
 	lenEllipsis  = len(token.ELLIPSIS.String())
 	lenEql       = len(token.EQL.String())
 	lenFunc      = len(token.FUNC.String())
+	lenFor       = len(token.FOR.String())
 	lenGeq       = len(token.GEQ.String())
 	lenGtr       = len(token.GTR.String())
 	lenImport    = len(token.IMPORT.String())
@@ -50,6 +51,7 @@ var (
 	lenSpace     = 1
 	lenStruct    = len(token.STRUCT.String())
 	lenSub       = len(token.SUB.String())
+	lenSwitch    = len(token.SWITCH.String())
 	lenType      = len(token.TYPE.String())
 	lenVar       = len(token.VAR.String())
 	lenXor       = len(token.XOR.String())
@@ -793,7 +795,7 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 		s := &ast.TypeSpec{}
 		s.Name = c.expr(from.Name).(*ast.Ident)
 		if from.Assign {
-			s.Assign = c.next(lenEql)
+			s.Assign = c.next(lenAssign)
 		}
 		s.Type = c.expr(from.Type)
 		c.markup(from.After)
@@ -997,17 +999,24 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Range:
-		var t = token.DEFINE
+		var t token.Token
+		var l int
 		if from.Assign {
 			t = token.ASSIGN
+			l = lenAssign
+		} else {
+			t = token.DEFINE
+			l = lenDefine
 		}
 		c.markup(from.Before)
 		to = &ast.RangeStmt{
-			Key:   c.expr(from.Key),
-			Value: c.expr(from.Value),
-			Tok:   t,
-			X:     c.expr(from.X),
-			Body:  c.stmt(from.Body).(*ast.BlockStmt),
+			For:    c.next(lenFor),
+			Key:    c.expr(from.Key),
+			Value:  c.expr(from.Value),
+			TokPos: c.next(l), // TODO: Should not set if Key==nil
+			Tok:    t,
+			X:      c.expr(from.X),
+			Body:   c.stmt(from.Body).(*ast.BlockStmt),
 		}
 		c.markup(from.After)
 	case *RemainderAssign:
@@ -1034,9 +1043,9 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	case *Send:
 		c.markup(from.Before)
 		to = &ast.SendStmt{
-		// TODO:
-		// Chan:  c.expr(from.Chan),
-		// Value: c.expr(from.Value),
+			Chan:  c.expr(from.X),
+			Arrow: c.next(lenArrow),
+			Value: c.expr(from.Y),
 		}
 		c.markup(from.After)
 	case *ShiftLeftAssign:
@@ -1070,15 +1079,17 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		c.markup(from.Before)
 		if from.Type == nil {
 			to = &ast.SwitchStmt{
-				Body: c.stmt(from.Body).(*ast.BlockStmt),
-				Init: c.stmt(from.Init),
-				Tag:  c.expr(from.Value),
+				Switch: c.next(lenSwitch),
+				Init:   c.stmt(from.Init),
+				Tag:    c.expr(from.Value),
+				Body:   c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		} else {
 			to = &ast.TypeSwitchStmt{
+				Switch: c.next(lenSwitch),
+				Init:   c.stmt(from.Init),
 				Assign: c.stmt(from.Type),
 				Body:   c.stmt(from.Body).(*ast.BlockStmt),
-				Init:   c.stmt(from.Init),
 			}
 		}
 		c.markup(from.After)
