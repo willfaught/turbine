@@ -730,19 +730,17 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.After)
 	case *FieldList:
 		if from == nil {
-			to = (*ast.FieldList)(nil)
+			to = (*ast.FieldList)(nil) // TODO: Why?
 		} else {
 			c.markup(from.Before)
-			var fs []*ast.Field
+			n := &ast.FieldList{}
+			n.Opening = c.next(1) // Either parens or curly braces
 			for _, f := range from.List {
-				fs = append(fs, c.node(f).(*ast.Field))
+				n.List = append(n.List, c.node(f).(*ast.Field))
 			}
-			to = &ast.FieldList{
-				Opening: c.next(1),
-				List:    fs,
-				Closing: c.next(1),
-			}
+			n.Closing = c.next(1) // Either parens or curly braces
 			c.markup(from.After)
+			to = n
 		}
 	case *File:
 		if c.tokenFileSet == nil {
@@ -756,18 +754,6 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.astFile.Decls = c.decls(from.Decls)
 		c.markup(from.Markup.After)
 		to = c.astFile
-	case *Package:
-		var fs map[string]*ast.File
-		if from.Files != nil {
-			fs = map[string]*ast.File{}
-			for k, v := range from.Files {
-				fs[k] = c.node(v).(*ast.File)
-				break // TODO: REMOVE, FOR TESTING ONLY
-			}
-		}
-		to = &ast.Package{
-			Files: fs,
-		}
 	default:
 		if d := c.decl(from); d != nil {
 			to = d
@@ -777,6 +763,8 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			to = s
 		} else if s := c.stmt(from); s != nil {
 			to = s
+		} else {
+			panic(from) // TODO: Return error
 		}
 	}
 	return to

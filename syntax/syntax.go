@@ -365,11 +365,6 @@ func (*Or) expression()                  {}
 func (*Or) specification()               {}
 func (*Or) statement()                   {}
 func (*Or) syntax()                      {}
-func (*Package) declaration()            {}
-func (*Package) expression()             {}
-func (*Package) specification()          {}
-func (*Package) statement()              {}
-func (*Package) syntax()                 {}
 func (*Paren) declaration()              {}
 func (*Paren) expression()               {}
 func (*Paren) specification()            {}
@@ -934,10 +929,6 @@ type Markup struct {
 type Name struct {
 	Markup
 	Text string
-}
-
-type Package struct {
-	Files map[string]*File
 }
 
 type Paren struct {
