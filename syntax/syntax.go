@@ -320,16 +320,16 @@ func (*Markup) expression()              {}
 func (*Markup) specification()           {}
 func (*Markup) statement()               {}
 func (*Markup) syntax()                  {}
-func (*Modulo) declaration()             {}
-func (*Modulo) expression()              {}
-func (*Modulo) specification()           {}
-func (*Modulo) statement()               {}
-func (*Modulo) syntax()                  {}
-func (*ModuloAssign) declaration()       {}
-func (*ModuloAssign) expression()        {}
-func (*ModuloAssign) specification()     {}
-func (*ModuloAssign) statement()         {}
-func (*ModuloAssign) syntax()            {}
+func (*Remainder) declaration()          {}
+func (*Remainder) expression()           {}
+func (*Remainder) specification()        {}
+func (*Remainder) statement()            {}
+func (*Remainder) syntax()               {}
+func (*RemainderAssign) declaration()    {}
+func (*RemainderAssign) expression()     {}
+func (*RemainderAssign) specification()  {}
+func (*RemainderAssign) statement()      {}
+func (*RemainderAssign) syntax()         {}
 func (*Multiply) declaration()           {}
 func (*Multiply) expression()            {}
 func (*Multiply) specification()         {}
@@ -450,11 +450,6 @@ func (*Space) expression()               {}
 func (*Space) specification()            {}
 func (*Space) statement()                {}
 func (*Space) syntax()                   {}
-func (*Spaces) declaration()             {}
-func (*Spaces) expression()              {}
-func (*Spaces) specification()           {}
-func (*Spaces) statement()               {}
-func (*Spaces) syntax()                  {}
 func (*String) declaration()             {}
 func (*String) expression()              {}
 func (*String) specification()           {}
@@ -559,7 +554,7 @@ type Divide struct {
 	Y Syntax
 }
 
-type Modulo struct {
+type Remainder struct {
 	Markup
 	X Syntax
 	Y Syntax
@@ -679,7 +674,7 @@ type DivideAssign struct {
 	Right []Syntax
 }
 
-type ModuloAssign struct {
+type RemainderAssign struct {
 	Markup
 	Left  []Syntax
 	Right []Syntax
@@ -987,9 +982,7 @@ type Slice struct {
 	Max  Syntax
 }
 
-type Space struct{}
-
-type Spaces struct {
+type Space struct {
 	Count int
 }
 

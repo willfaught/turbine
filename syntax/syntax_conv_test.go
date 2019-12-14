@@ -30,13 +30,78 @@ func TestSyntax(t *testing.T) {
 			&Func{
 				Name: &Name{Text: "f"},
 				Body: &Block{
+					List: []Syntax{},
+				},
+			},
+		},
+	}
+	fset, n := ConvertFile(s)
+	// spew.Dump(fset, n)
+	if err := format.Node(os.Stdout, fset, n); err != nil {
+		t.Error(err)
+	}
+	t.FailNow()
+}
+
+func TestIfSyntax(t *testing.T) {
+	s := &File{
+		Package: &Name{
+			Text: "main",
+		},
+		Decls: []Syntax{
+			&Func{
+				Name: &Name{Text: "f"},
+				Body: &Block{
 					List: []Syntax{
 						&If{
 							Init: &Define{Left: []Syntax{&Name{Text: "x"}}, Right: []Syntax{&Int{Text: "123"}}},
 							Cond: &Less{X: &Name{Text: "x"}, Y: &Name{Text: "y"}},
 							Body: &Block{
 								List: []Syntax{
-									&Assign{Left: []Syntax{&Name{Text: "y"}}, Right: []Syntax{&Name{Text: "x"}}},
+									&Assign{
+										Markup: Markup{
+											Before: []Syntax{
+												// &Comment{Text: "/*c*/"},
+												&Line{},
+												// &Line{},
+											},
+											After: []Syntax{
+											// &Comment{Text: "/*c*/"},
+											// &Line{},
+											// &Line{},
+											},
+										},
+										Left: []Syntax{&Name{
+											Markup: Markup{
+												Before: []Syntax{
+													&Comment{Text: "/*1*/"},
+													// &Line{},
+													// &Line{},
+												},
+												After: []Syntax{
+													&Comment{Text: "/*2*/"},
+													&Line{},
+													&Line{},
+												},
+											},
+											Text: "y",
+										}},
+										Right: []Syntax{&Name{
+											Markup: Markup{
+												Before: []Syntax{
+													&Comment{Text: "/*3*/"},
+													// &Line{},
+													// &Line{},
+												},
+												After: []Syntax{
+													&Comment{Text: "/*4*/"},
+													// &Line{},
+													// &Line{},
+												},
+											},
+											Text: "x",
+										}},
+									},
 								},
 							},
 						},
@@ -46,7 +111,7 @@ func TestSyntax(t *testing.T) {
 		},
 	}
 	fset, n := ConvertFile(s)
-	// pretty.Println(fset, n)
+	// spew.Dump(fset, n)
 	if err := format.Node(os.Stdout, fset, n); err != nil {
 		t.Error(err)
 	}
