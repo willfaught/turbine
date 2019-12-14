@@ -9,32 +9,50 @@ import (
 )
 
 var (
+	lenAdd       = len(token.ADD.String())
 	lenAnd       = len(token.AND.String())
+	lenAndNot    = len(token.AND_NOT.String())
 	lenArrow     = len(token.ARROW.String())
 	lenAssign    = len(token.ASSIGN.String())
 	lenChan      = len(token.CHAN.String())
 	lenColon     = len(token.COLON.String())
 	lenConst     = len(token.CONST.String())
 	lenDefine    = len(token.DEFINE.String())
+	lenQuo       = len(token.QUO.String())
 	lenEllipsis  = len(token.ELLIPSIS.String())
+	lenEql       = len(token.EQL.String())
 	lenFunc      = len(token.FUNC.String())
+	lenGeq       = len(token.GEQ.String())
+	lenGtr       = len(token.GTR.String())
 	lenImport    = len(token.IMPORT.String())
 	lenInterface = len(token.INTERFACE.String())
+	lenLand      = len(token.LAND.String())
 	lenLbrace    = len(token.LBRACE.String())
 	lenLbrack    = len(token.LBRACK.String())
+	lenLeq       = len(token.LEQ.String())
+	lenLss       = len(token.LSS.String())
+	lenLor       = len(token.LOR.String())
 	lenLparen    = len(token.LPAREN.String())
 	lenMap       = len(token.MAP.String())
 	lenMul       = len(token.MUL.String())
+	lenNeq       = len(token.NEQ.String())
 	lenNewline   = 1
+	lenNot       = len(token.NOT.String())
+	lenOr        = len(token.OR.String())
 	lenPackage   = len(token.PACKAGE.String())
 	lenPeriod    = len(token.PERIOD.String())
 	lenRbrace    = len(token.RBRACE.String())
 	lenRbrack    = len(token.RBRACK.String())
+	lenRem       = len(token.REM.String())
 	lenRparen    = len(token.RPAREN.String())
+	lenShl       = len(token.SHL.String())
+	lenShr       = len(token.SHR.String())
 	lenSpace     = 1
 	lenStruct    = len(token.STRUCT.String())
+	lenSub       = len(token.SUB.String())
 	lenType      = len(token.TYPE.String())
 	lenVar       = len(token.VAR.String())
+	lenXor       = len(token.XOR.String())
 )
 
 func ConvertFile(f *File) (*token.FileSet, *ast.File) {
@@ -192,7 +210,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenAdd),
 			Op:    token.ADD,
 			Y:     c.expr(from.Y),
 		}
@@ -201,7 +219,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenLand),
 			Op:    token.LAND,
 			Y:     c.expr(from.Y),
 		}
@@ -210,7 +228,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenAndNot),
 			Op:    token.AND_NOT,
 			Y:     c.expr(from.Y),
 		}
@@ -238,7 +256,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenAnd),
 			Op:    token.AND,
 			Y:     c.expr(from.Y),
 		}
@@ -247,7 +265,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenOr),
 			Op:    token.OR,
 			Y:     c.expr(from.Y),
 		}
@@ -308,7 +326,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenQuo),
 			Op:    token.QUO,
 			Y:     c.expr(from.Y),
 		}
@@ -324,7 +342,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenEql),
 			Op:    token.EQL,
 			Y:     c.expr(from.Y),
 		}
@@ -357,7 +375,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenGtr),
 			Op:    token.GTR,
 			Y:     c.expr(from.Y),
 		}
@@ -366,7 +384,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenGeq),
 			Op:    token.GEQ,
 			Y:     c.expr(from.Y),
 		}
@@ -415,7 +433,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenLss),
 			Op:    token.LSS,
 			Y:     c.expr(from.Y),
 		}
@@ -424,7 +442,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenLeq),
 			Op:    token.LEQ,
 			Y:     c.expr(from.Y),
 		}
@@ -441,13 +459,13 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenMul),
 			Op:    token.MUL,
 			Y:     c.expr(from.Y),
 		}
 		c.markup(from.After)
 	case *Name:
-		if from == nil {
+		if from == nil { // TODO: Why is this needed?
 			return nil
 		}
 		c.markup(from.Before)
@@ -459,7 +477,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 	case *Negate:
 		c.markup(from.Before)
 		to = &ast.UnaryExpr{
-			OpPos: c.next(len(token.SUB.String())),
+			OpPos: c.next(lenSub),
 			Op:    token.SUB,
 			X:     c.expr(from.X),
 		}
@@ -467,7 +485,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 	case *Not:
 		c.markup(from.Before)
 		to = &ast.UnaryExpr{
-			OpPos: c.next(len(token.NOT.String())),
+			OpPos: c.next(lenNot),
 			Op:    token.NOT,
 			X:     c.expr(from.X),
 		}
@@ -476,7 +494,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenNeq),
 			Op:    token.NEQ,
 			Y:     c.expr(from.Y),
 		}
@@ -485,7 +503,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenLor),
 			Op:    token.LOR,
 			Y:     c.expr(from.Y),
 		}
@@ -508,7 +526,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 	case *Receive:
 		c.markup(from.Before)
 		to = &ast.UnaryExpr{
-			OpPos: c.next(len(token.ARROW.String())),
+			OpPos: c.next(lenArrow),
 			Op:    token.ARROW,
 			X:     c.expr(from.X),
 		}
@@ -525,7 +543,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenRem),
 			Op:    token.REM,
 			Y:     c.expr(from.Y),
 		}
@@ -540,16 +558,16 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.After)
 	case *Selector:
 		c.markup(from.Before)
-		s := &ast.SelectorExpr{X: c.expr(from.X)}
+		e := &ast.SelectorExpr{X: c.expr(from.X)}
 		c.next(lenPeriod)
-		s.Sel = c.expr(from.Sel).(*ast.Ident)
+		e.Sel = c.expr(from.Sel).(*ast.Ident)
 		c.markup(from.After)
-		to = s
+		to = e
 	case *Send:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenArrow),
 			Op:    token.ARROW,
 			Y:     c.expr(from.Y),
 		}
@@ -558,7 +576,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenShl),
 			Op:    token.SHL,
 			Y:     c.expr(from.Y),
 		}
@@ -567,7 +585,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(2),
+			OpPos: c.next(lenShr),
 			Op:    token.SHR,
 			Y:     c.expr(from.Y),
 		}
@@ -580,7 +598,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Low:    c.expr(from.Low),
 			High:   c.expr(from.High),
 			Max:    c.expr(from.Max),
-			Slice3: false, // TODO
+			Slice3: from.Max != nil, // TODO: Test
 			Rbrack: c.next(lenRbrack),
 		}
 		c.markup(from.After)
@@ -607,7 +625,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenSub),
 			Op:    token.SUB,
 			Y:     c.expr(from.Y),
 		}
@@ -616,7 +634,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.X),
-			OpPos: c.next(1),
+			OpPos: c.next(lenXor),
 			Op:    token.XOR,
 			Y:     c.expr(from.Y),
 		}
@@ -856,7 +874,7 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
-	case *ModuloAssign:
+	case *RemainderAssign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
