@@ -785,16 +785,17 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 		to = &ast.ImportSpec{
 			Name:   ident(c.expr(from.Name)),
 			Path:   c.expr(from.Path).(*ast.BasicLit),
-			EndPos: 0, // TODO
+			EndPos: 0, // TODO: Verify this should be 0
 		}
 		c.markup(from.After)
 	case *Type:
 		c.markup(from.Before)
-		to = &ast.TypeSpec{
-			// Assign: from.Assign,
-			Name: c.expr(from.Name).(*ast.Ident),
-			Type: c.expr(from.Type),
+		s := &ast.TypeSpec{}
+		s.Name = c.expr(from.Name).(*ast.Ident)
+		if from.Assign {
+			s.Assign = c.next(lenEql)
 		}
+		s.Type = c.expr(from.Type)
 		c.markup(from.After)
 	case *Var:
 		c.markup(from.Before)
@@ -817,15 +818,6 @@ func (c *syntaxConv) specs(from []Syntax) (to []ast.Spec) {
 
 func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 	switch from := from.(type) {
-	case *Assign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
 	case *AddAssign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
@@ -835,39 +827,21 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
-	case *SubtractAssign:
+	case *AndNotAssign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.next(lenAssign),
-			Tok:    token.SUB_ASSIGN,
+			Tok:    token.AND_NOT_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
-	case *MultiplyAssign:
+	case *Assign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.next(lenAssign),
-			Tok:    token.MUL_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *DivideAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.QUO_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *RemainderAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.REM_ASSIGN,
+			Tok:    token.ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
@@ -886,42 +860,6 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.next(lenAssign),
 			Tok:    token.OR_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *XorAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.XOR_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *ShiftLeftAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.SHL_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *ShiftRightAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.SHR_ASSIGN,
-			Rhs:    c.exprs(from.Right),
-		}
-		c.markup(from.After)
-	case *AndNotAssign:
-		c.markup(from.Before)
-		to = &ast.AssignStmt{
-			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
-			Tok:    token.AND_NOT_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
@@ -985,6 +923,15 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
+	case *DivideAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.QUO_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *Empty:
 		c.markup(from.Before)
 		to = &ast.EmptyStmt{}
@@ -1040,6 +987,15 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Stmt:  c.stmt(from.Stmt),
 		}
 		c.markup(from.After)
+	case *MultiplyAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.MUL_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *Range:
 		var t = token.DEFINE
 		if from.Assign {
@@ -1052,6 +1008,15 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Tok:   t,
 			X:     c.expr(from.X),
 			Body:  c.stmt(from.Body).(*ast.BlockStmt),
+		}
+		c.markup(from.After)
+	case *RemainderAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.REM_ASSIGN,
+			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
 	case *Return:
@@ -1074,6 +1039,33 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		// Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
+	case *ShiftLeftAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SHL_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
+	case *ShiftRightAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SHR_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
+	case *SubtractAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.SUB_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	case *Switch:
 		c.markup(from.Before)
 		if from.Type == nil {
@@ -1090,12 +1082,22 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			}
 		}
 		c.markup(from.After)
+	case *XorAssign:
+		c.markup(from.Before)
+		to = &ast.AssignStmt{
+			Lhs:    c.exprs(from.Left),
+			TokPos: c.next(lenAssign),
+			Tok:    token.XOR_ASSIGN,
+			Rhs:    c.exprs(from.Right),
+		}
+		c.markup(from.After)
 	default:
 		if d := c.decl(from); d != nil {
 			to = &ast.DeclStmt{Decl: d}
-		}
-		if e := c.expr(from); e != nil {
+		} else if e := c.expr(from); e != nil {
 			to = &ast.ExprStmt{X: e}
+		} else {
+			panic(from) // TODO: Return error
 		}
 	}
 	return to
