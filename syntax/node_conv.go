@@ -1,5 +1,6 @@
 package syntax
 
+/*
 import (
 	"go/ast"
 	"go/token"
@@ -200,9 +201,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		return nil
 	case *ast.AssignStmt:
 		return &Assign{
-		// Left: c.exprs(n.Lhs),
-		// TODO: Operator: n.Tok,
-		// Right: c.exprs(n.Rhs),
+			// Left: c.exprs(n.Lhs),
+			// TODO: Operator: n.Tok,
+			// Right: c.exprs(n.Rhs),
 		}
 	case *ast.BadStmt:
 		return nil // TODO
@@ -238,14 +239,17 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 			Call: c.node(n.Call).(*Call),
 		}
 	case *ast.EmptyStmt:
-		return &Empty{}
+		// TODO:
+		// return &Empty{}
+		panic("empty stmt unexpected")
 	case *ast.ExprStmt:
 		return c.nodePos(begin, end, n.X)
 	case *ast.ForStmt:
 		return &For{
-			Init: c.node(n.Init),
-			Cond: c.node(n.Cond),
-			Post: c.node(n.Post),
+			// TODO:
+			// Init: c.node(n.Init),
+			// Cond: c.node(n.Cond),
+			// Post: c.node(n.Post),
 			Body: c.node(n.Body).(*Block),
 		}
 	case *ast.GoStmt:
@@ -262,24 +266,25 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 	case *ast.IncDecStmt:
 		if n.Tok == token.INC {
 			return &Inc{
-				X: c.node(n.X),
+				// TODO: X: c.node(n.X),
 			}
 		}
 		return &Dec{
-			X: c.node(n.X),
+			// TODO: X: c.node(n.X),
 		}
 	case *ast.LabeledStmt:
 		return &Label{
 			Label: c.node(n.Label).(*Name),
-			Stmt:  c.node(n.Stmt),
+			// TODO: Stmt:  c.node(n.Stmt),
 		}
 	case *ast.RangeStmt:
 		return &Range{
 			Assign: n.Tok == token.ASSIGN,
-			Key:    c.node(n.Key),
-			Value:  c.node(n.Value),
-			X:      c.node(n.X),
-			Body:   c.node(n.Body).(*Block),
+			// TODO:
+			// Key:    c.node(n.Key),
+			// Value:  c.node(n.Value),
+			// X:      c.node(n.X),
+			Body: c.node(n.Body).(*Block),
 		}
 	case *ast.ReturnStmt:
 		return &Return{
@@ -297,15 +302,17 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		// }
 	case *ast.SwitchStmt:
 		return &Switch{
-			Body:  c.node(n.Body).(*Block),
-			Init:  c.node(n.Init),
-			Value: c.node(n.Tag),
+			Body: c.node(n.Body).(*Block),
+			// TODO:
+			// Init:  c.node(n.Init),
+			// Value: c.node(n.Tag),
 		}
 	case *ast.TypeSwitchStmt:
 		return &Switch{
 			Body: c.node(n.Body).(*Block),
-			Init: c.node(n.Init),
-			Type: c.node(n.Assign),
+			// TODO:
+			// Init: c.node(n.Init),
+			// Type: c.node(n.Assign),
 		}
 	case *ast.ImportSpec:
 		return &Import{
@@ -316,13 +323,14 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		return &Type{
 			// Assign: n.Assign,
 			Name: c.node(n.Name).(*Name),
-			Type: c.node(n.Type),
+			// TODO: Type: c.node(n.Type),
 		}
 	case *ast.ValueSpec:
 		return &Const{
-			Names:  c.idents(n.Names),
-			Type:   c.node(n.Type),
-			Values: c.exprs(n.Values),
+			Names: c.idents(n.Names),
+			// TODO:
+			// Type:   c.node(n.Type),
+			// Values: c.exprs(n.Values),
 		}
 	case *ast.BadDecl:
 		return nil
@@ -400,7 +408,7 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 					Markup: c.markup(specBegin, specEnd, spec),
 					Name:   c.node(spec.Name).(*Name),
 					// Assign: spec.Assign,
-					Type: c.node(spec.Type),
+					// TODO: Type: c.node(spec.Type),
 				}
 			case *ast.ValueSpec:
 				switch n.Tok {
@@ -408,15 +416,17 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 					s = &Const{
 						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
-						Type:   c.node(spec.Type),
-						Values: c.exprs(spec.Values),
+						// TODO:
+						// Type:   c.node(spec.Type),
+						// Values: c.exprs(spec.Values),
 					}
 				case token.VAR:
 					s = &Var{
 						Markup: c.markup(specBegin, specEnd, spec),
 						Names:  c.idents(spec.Names),
-						Type:   c.node(spec.Type),
-						Values: c.exprs(spec.Values),
+						// TODO:
+						// Type:   c.node(spec.Type),
+						// Values: c.exprs(spec.Values),
 					}
 				default:
 					panic(n.Tok)
@@ -429,18 +439,18 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 		switch n.Tok {
 		case token.CONST:
-			return &ConstList{List: ss, Markup: m}
+			// TODO: return &ConstList{List: ss, Markup: m}
 		case token.IMPORT:
-			return &ImportList{List: ss, Markup: m}
+			// TODO: return &ImportList{List: ss, Markup: m}
 		case token.TYPE:
-			return &TypeList{List: ss, Markup: m}
+			// TODO: return &TypeList{List: ss, Markup: m}
 		case token.VAR:
-			return &VarList{List: ss, Markup: m}
+			// TODO: return &VarList{List: ss, Markup: m}
 		}
 	case *ast.ArrayType:
 		return &Array{
-		// Element: c.node(n.Elt),
-		// Length:  c.node(n.Len),
+			// Element: c.node(n.Elt),
+			// Length:  c.node(n.Len),
 		}
 	case *ast.BadExpr:
 		return nil
@@ -482,34 +492,36 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 	case *ast.CallExpr:
 		s := &Call{}
 		s.Markup = c.markup(begin, end, n)
-		s.Fun = c.nodePos(c.nodeBegin(n.Fun), n.Lparen, n.Fun)
-		s.Args = c.exprs(n.Args)
+		// TODO:
+		// s.Fun = c.nodePos(c.nodeBegin(n.Fun), n.Lparen, n.Fun)
+		// s.Args = c.exprs(n.Args)
 		s.Ellipsis = n.Ellipsis != token.NoPos
 		return s
 	case *ast.ChanType:
 		switch n.Dir {
 		case ast.RECV:
 			return &ChanIn{
-				Value: c.node(n.Value),
+				// TODO: Value: c.node(n.Value),
 			}
 		case ast.SEND:
 			return &ChanOut{
-				Value: c.node(n.Value),
+				// TODO: Value: c.node(n.Value),
 			}
 		default:
 			return &Chan{
-				Value: c.node(n.Value),
+				// TODO: Value: c.node(n.Value),
 			}
 		}
 	case *ast.CompositeLit:
 		return &Composite{
-			Elts: c.exprs(n.Elts),
-			Type: c.node(n.Type),
+			// TODO: Elts: c.exprs(n.Elts),
+			// TODO: Type: c.node(n.Type),
 		}
 	case *ast.Ellipsis:
-		return &Ellipsis{
-			Elt: c.node(n.Elt),
-		}
+		// TODO:
+		// return &Ellipsis{
+		// 	Elt: c.node(n.Elt),
+		// }
 	case *ast.FuncLit:
 		return &Func{
 			Body:       c.node(n.Body).(*Block),
@@ -531,8 +543,9 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.IndexExpr:
 		return &Index{
-			Index: c.node(n.Index),
-			X:     c.node(n.X),
+			// TODO:
+			// Index: c.node(n.Index),
+			// X:     c.node(n.X),
 		}
 	case *ast.InterfaceType:
 		return &Interface{
@@ -540,13 +553,15 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.KeyValueExpr:
 		return &KeyValue{
-			Key:   c.node(n.Key),
-			Value: c.node(n.Value),
+			// TODO:
+			// Key:   c.node(n.Key),
+			// Value: c.node(n.Value),
 		}
 	case *ast.MapType:
 		return &Map{
-			Key:   c.node(n.Key),
-			Value: c.node(n.Value),
+			// TODO:
+			// Key:   c.node(n.Key),
+			// Value: c.node(n.Value),
 		}
 	case *ast.ParenExpr:
 		return &Paren{
@@ -576,8 +591,8 @@ func (c *nodeConv) nodePos(begin, end token.Pos, n ast.Node) Syntax {
 		}
 	case *ast.TypeAssertExpr:
 		return &Assert{
-		// Type: c.node(n.Type),
-		// X:    c.node(n.X),
+			// Type: c.node(n.Type),
+			// X:    c.node(n.X),
 		}
 	case *ast.UnaryExpr:
 		// TODO
@@ -694,11 +709,11 @@ func (c *nodeConv) specs(from []ast.Spec) []Syntax {
 	return to
 }
 
-func (c *nodeConv) stmts(begin, end token.Pos, from []ast.Stmt) []Syntax {
+func (c *nodeConv) stmts(begin, end token.Pos, from []ast.Stmt) []Statement {
 	if len(from) == 0 {
 		return nil
 	}
-	to := make([]Syntax, len(from))
+	to := make([]Statement, len(from))
 	for i, f := range from {
 		var stmtBegin, stmtEnd token.Pos
 		if i == 0 {
@@ -720,3 +735,4 @@ func (c *nodeConv) stmts(begin, end token.Pos, from []ast.Stmt) []Syntax {
 	}
 	return to
 }
+*/

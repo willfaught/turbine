@@ -99,7 +99,7 @@ type syntaxConv struct {
 	tokenFileSet *token.FileSet
 }
 
-func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
+func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 	switch from := from.(type) {
 	case *Const:
 		c.markup(from.Before)
@@ -199,14 +199,14 @@ func (c *syntaxConv) decl(from Syntax) (to ast.Decl) {
 	return to
 }
 
-func (c *syntaxConv) decls(from []Syntax) (to []ast.Decl) {
+func (c *syntaxConv) decls(from []Declaration) (to []ast.Decl) {
 	for _, s := range from {
 		to = append(to, c.decl(s))
 	}
 	return to
 }
 
-func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
+func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 	switch from := from.(type) {
 	case *Add:
 		c.markup(from.Before)
@@ -333,13 +333,14 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 			Y:     c.expr(from.Y),
 		}
 		c.markup(from.After)
-	case *Ellipsis: // TODO: Where is this used?
-		c.markup(from.Before)
-		to = &ast.Ellipsis{
-			Ellipsis: c.next(lenEllipsis),
-			Elt:      c.expr(from.Elt),
-		}
-		c.markup(from.After)
+	// TODO:
+	// case *Ellipsis: // TODO: Where is this used?
+	// 	c.markup(from.Before)
+	// 	to = &ast.Ellipsis{
+	// 		Ellipsis: c.next(lenEllipsis),
+	// 		Elt:      c.expr(from.Elt),
+	// 	}
+	// 	c.markup(from.After)
 	case *Equal:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
@@ -565,15 +566,6 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 		e.Sel = c.expr(from.Sel).(*ast.Ident)
 		c.markup(from.After)
 		to = e
-	case *Send:
-		c.markup(from.Before)
-		to = &ast.BinaryExpr{
-			X:     c.expr(from.X),
-			OpPos: c.next(lenArrow),
-			Op:    token.ARROW,
-			Y:     c.expr(from.Y),
-		}
-		c.markup(from.After)
 	case *ShiftLeft:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
@@ -647,7 +639,7 @@ func (c *syntaxConv) expr(from Syntax) (to ast.Expr) {
 	return to
 }
 
-func (c *syntaxConv) exprs(from []Syntax) (to []ast.Expr) {
+func (c *syntaxConv) exprs(from []Expression) (to []ast.Expr) {
 	for _, f := range from {
 		to = append(to, c.expr(f))
 	}
@@ -712,14 +704,15 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			Slash: c.next(len(from.Text)),
 			Text:  from.Text,
 		}
-	case *CommentGroup:
-		var cs []*ast.Comment
-		for _, com := range from.List {
-			cs = append(cs, c.node(com).(*ast.Comment))
-		}
-		to = &ast.CommentGroup{
-			List: cs,
-		}
+	// TODO:
+	// case *CommentGroup:
+	// 	var cs []*ast.Comment
+	// 	for _, com := range from.List {
+	// 		cs = append(cs, c.node(com).(*ast.Comment))
+	// 	}
+	// 	to = &ast.CommentGroup{
+	// 		List: cs,
+	// 	}
 	case *Field:
 		c.markup(from.Before)
 		f := &ast.Field{}
@@ -757,17 +750,7 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.Markup.After)
 		to = c.astFile
 	default:
-		if d := c.decl(from); d != nil {
-			to = d
-		} else if e := c.expr(from); e != nil {
-			to = e
-		} else if s := c.spec(from); s != nil {
-			to = s
-		} else if s := c.stmt(from); s != nil {
-			to = s
-		} else {
-			panic(from) // TODO: Return error
-		}
+		panic(from) // TODO: Return error
 	}
 	return to
 }
@@ -811,14 +794,14 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 	return to
 }
 
-func (c *syntaxConv) specs(from []Syntax) (to []ast.Spec) {
+func (c *syntaxConv) specs(from []Declaration) (to []ast.Spec) {
 	for _, f := range from {
 		to = append(to, c.spec(f))
 	}
 	return to
 }
 
-func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
+func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	switch from := from.(type) {
 	case *AddAssign:
 		c.markup(from.Before)
@@ -934,10 +917,11 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
-	case *Empty:
-		c.markup(from.Before)
-		to = &ast.EmptyStmt{}
-		c.markup(from.After)
+	// TODO:
+	// case *Empty:
+	// 	c.markup(from.Before)
+	// 	to = &ast.EmptyStmt{}
+	// 	c.markup(from.After)
 	case *Fallthrough:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
@@ -1103,18 +1087,12 @@ func (c *syntaxConv) stmt(from Syntax) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	default:
-		if d := c.decl(from); d != nil {
-			to = &ast.DeclStmt{Decl: d}
-		} else if e := c.expr(from); e != nil {
-			to = &ast.ExprStmt{X: e}
-		} else {
-			panic(from) // TODO: Return error
-		}
+		panic(from) // TODO: Return error
 	}
 	return to
 }
 
-func (c *syntaxConv) stmts(from []Syntax) (to []ast.Stmt) {
+func (c *syntaxConv) stmts(from []Statement) (to []ast.Stmt) {
 	for _, f := range from {
 		to = append(to, c.stmt(f))
 	}
