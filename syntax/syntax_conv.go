@@ -57,24 +57,27 @@ var (
 	lenXor       = len(token.XOR.String())
 )
 
-func ConvertFile(f *File) (*token.FileSet, *ast.File) {
-	var c syntaxConv
+func MustToFileString(f *File) string {
+	s, err := ToFileString(f)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+func ToFile(f *File) (*token.FileSet, *ast.File) {
+	c := newSyntaxConv()
 	n := c.node(f)
 	return c.tokenFileSet, n.(*ast.File)
 }
 
-func MustFileString(f *File) string {
-	fset, n := ConvertFile(f)
+func ToFileString(f *File) (string, error) {
+	fset, n := ToFile(f)
 	b := &bytes.Buffer{}
 	if err := format.Node(b, fset, n); err != nil {
-		panic(err)
+		return "", fmt.Errorf("cannot format node: %w", err)
 	}
-	return b.String()
-}
-
-func convertSyntax(s Syntax) ast.Node {
-	var c syntaxConv
-	return c.node(s)
+	return b.String(), nil
 }
 
 func blockStmt(s ast.Stmt) *ast.BlockStmt {
@@ -97,6 +100,15 @@ type syntaxConv struct {
 	newLineEmpty bool // new line added but nothing added to it yet. TODO: check if true at end and remove last line from token file if true.
 	tokenFile    *token.File
 	tokenFileSet *token.FileSet
+}
+
+func newSyntaxConv() *syntaxConv {
+	fset := token.NewFileSet()
+	return &syntaxConv{
+		astFile:      &ast.File{},
+		tokenFile:    fset.AddFile("", -1, 99999999999999), // TODO: Max int
+		tokenFileSet: fset,
+	}
 }
 
 func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
@@ -654,9 +666,6 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 }
 
 func (c *syntaxConv) markup(ss []Syntax) {
-	if c.astFile == nil || c.tokenFile == nil { // TODO: Remove these, require proper setup
-		return
-	}
 	var cg *ast.CommentGroup
 	var lastLine bool // was last syntax item a *Line?
 	for _, s := range ss {
@@ -738,11 +747,6 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			to = n
 		}
 	case *File:
-		if c.tokenFileSet == nil {
-			c.tokenFileSet = token.NewFileSet()
-		}
-		c.tokenFile = c.tokenFileSet.AddFile("", -1, 99999999999999) // TODO
-		c.astFile = &ast.File{}
 		c.markup(from.Markup.Before)
 		c.astFile.Package = c.next(lenPackage)
 		c.astFile.Name = c.expr(from.Package).(*ast.Ident)
