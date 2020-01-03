@@ -57,22 +57,13 @@ var (
 	lenXor       = len(token.XOR.String())
 )
 
-func MustToFileString(f *File) string {
-	s, err := ToFileString(f)
-	if err != nil {
-		panic(err)
-	}
-	return s
-}
-
-func ToFile(f *File) (*token.FileSet, *ast.File) {
+func ToNode(s Syntax) (*token.FileSet, ast.Node) {
 	c := newSyntaxConv()
-	n := c.node(f)
-	return c.tokenFileSet, n.(*ast.File)
+	return c.tokenFileSet, c.node(s)
 }
 
-func ToFileString(f *File) (string, error) {
-	fset, n := ToFile(f)
+func ToString(s Syntax) (string, error) {
+	fset, n := ToNode(s)
 	b := &bytes.Buffer{}
 	if err := format.Node(b, fset, n); err != nil {
 		return "", fmt.Errorf("cannot format node: %w", err)
@@ -754,7 +745,15 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.Markup.After)
 		to = c.astFile
 	default:
-		panic(from) // TODO: Return error
+		if d, ok := from.(Declaration); ok {
+			to = c.decl(d)
+		} else if e, ok := from.(Expression); ok {
+			to = c.expr(e)
+		} else if s, ok := from.(Statement); ok {
+			to = c.stmt(s)
+		} else {
+			panic(fmt.Sprintf("invalid node: %#v", from))
+		}
 	}
 	return to
 }

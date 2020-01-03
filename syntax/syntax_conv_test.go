@@ -1,22 +1,50 @@
 package syntax
 
-import (
-	"go/format"
-	"os"
-	"testing"
+import "testing"
 
-	"github.com/willfaught/turbine"
-)
+func mustToString(s Syntax) string {
+	str, err := ToString(s)
+	if err != nil {
+		panic(err)
+	}
+	return str
+}
+
+func TestSyntaxConv(t *testing.T) {
+	tests := []struct {
+		syn Syntax
+		str string
+		// node ast.Node
+		// coms []*ast.CommentGroup
+		// lines []int
+	}{
+		{
+			&String{Text: ""},
+			"",
+		},
+		{
+			&String{Text: `"x"`},
+			"xy",
+		},
+	}
+	for _, test := range tests {
+		if s, err := ToString(test.syn); err != nil {
+			t.Errorf("%#v error: %v", test.syn, err)
+		} else if s != test.str {
+			t.Errorf("%#v string: %s", test.syn, s)
+		}
+	}
+}
 
 func TestEmpty(t *testing.T) {
-	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
-	if err != nil {
-		t.Fatal(err)
-	}
-	f := p.Nodes.Files["/Users/Will/Developer/go/src/github.com/willfaught/turbine/syntax/testdata/empty/empty.go"]
-	// pretty.Println()
-	format.Node(os.Stdout, p.Tokens, f)
-	t.FailNow()
+	// p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// f := p.Nodes.Files["/Users/Will/Developer/go/src/github.com/willfaught/turbine/syntax/testdata/empty/empty.go"]
+	// // pretty.Println()
+	// format.Node(os.Stdout, p.Tokens, f)
+	// t.FailNow()
 }
 
 func TestSyntax(t *testing.T) {
@@ -33,11 +61,7 @@ func TestSyntax(t *testing.T) {
 			},
 		},
 	}
-	fset, n := ToFile(s)
-	// spew.Dump(fset, n)
-	if err := format.Node(os.Stdout, fset, n); err != nil {
-		t.Error(err)
-	}
+	t.Log(mustToString(s))
 	t.FailNow()
 }
 
@@ -108,11 +132,7 @@ func TestIfSyntax(t *testing.T) {
 			},
 		},
 	}
-	fset, n := ToFile(s)
-	// spew.Dump(fset, n)
-	if err := format.Node(os.Stdout, fset, n); err != nil {
-		t.Error(err)
-	}
+	t.Log(mustToString(s))
 	t.FailNow()
 }
 
