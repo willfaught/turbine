@@ -1,6 +1,11 @@
 package syntax
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+
+	"github.com/kr/pretty"
+)
 
 func mustToString(s Syntax) string {
 	str, err := ToString(s)
@@ -10,7 +15,68 @@ func mustToString(s Syntax) string {
 	return str
 }
 
-func TestSyntaxConv(t *testing.T) {
+func TestExpressions(t *testing.T) {
+	t.Parallel()
+	type Test struct {
+		syn Expression
+		str string
+		// node ast.Node
+		// coms []*ast.CommentGroup
+		// lines []int
+	}
+	m := Markup{
+		Before: []Syntax{
+			&Comment{Text: "/*a*/"},
+		},
+		After: []Syntax{
+			&Comment{Text: "/*b*/"},
+		},
+	}
+	tests := []Test{
+		{
+			&Name{Text: "x"},
+			"x",
+		},
+		{
+			&Name{Markup: m, Text: "z"},
+			"/*a*/ z /*b*/",
+		},
+		{
+			&String{Text: `"x"`},
+			`"x"`,
+		},
+		{
+			&String{Text: "`x`"},
+			"`x`",
+		},
+		{
+			&String{Markup: m, Text: `"x"`},
+			`/*a*/ "x" /*b*/`,
+		},
+	}
+	for _, test := range tests {
+		func(test Test) {
+			t.Run(fmt.Sprintf("%#v", test.syn), func(t *testing.T) {
+				t.Parallel()
+				if s, err := ToString(&File{
+					Package: &Name{Text: "p"},
+					Decls: []Declaration{
+						&Var{
+							Names:  []*Name{{Text: "_"}},
+							Values: []Expression{test.syn},
+						},
+					},
+				}); err != nil {
+					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(test.syn), err)
+				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", test.str); s != e {
+					t.Errorf("Syntax: %s\nString: %#v\ne: %#v", pretty.Sprint(test.syn), s, e)
+				}
+			})
+		}(test)
+	}
+}
+
+func TestStatements(t *testing.T) {
 	tests := []struct {
 		syn Syntax
 		str string
@@ -19,19 +85,65 @@ func TestSyntaxConv(t *testing.T) {
 		// lines []int
 	}{
 		{
+			&Block{
+				List: []Statement{
+					&Return{},
+				},
+			},
+			"{\n\treturn\n}",
+		},
+		{
+			&If{
+				Cond: &Name{Text: "x"},
+				Body: &Block{
+					List: []Statement{
+						&Return{},
+					},
+				},
+			},
+			"if x {\n\treturn\n}",
+		},
+		{
+			&Name{Text: ""},
+			"",
+		},
+		{
+			&Name{Text: "x"},
+			"x",
+		},
+		{
+			&Name{
+				Markup: Markup{
+					Before: []Syntax{
+						&Comment{Text: "/*x*/"},
+					},
+					After: []Syntax{
+						&Comment{Text: "/*y*/"},
+					},
+				},
+				Text: "z",
+			},
+			"/*x*/ z /*y*/",
+		},
+		{
 			&String{Text: ""},
 			"",
 		},
 		{
 			&String{Text: `"x"`},
-			"xy",
+			`"x"`,
+		},
+		{
+			&String{Text: "`x`"},
+			"`x`",
 		},
 	}
 	for _, test := range tests {
+
 		if s, err := ToString(test.syn); err != nil {
-			t.Errorf("%#v error: %v", test.syn, err)
+			t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(test.syn), err)
 		} else if s != test.str {
-			t.Errorf("%#v string: %s", test.syn, s)
+			t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(test.syn), s)
 		}
 	}
 }

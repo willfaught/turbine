@@ -211,6 +211,7 @@ func (c *syntaxConv) decls(from []Declaration) (to []ast.Decl) {
 
 func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 	switch from := from.(type) {
+	case nil:
 	case *Add:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
@@ -637,7 +638,7 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.markup(from.After)
 	default:
-		panic(from) // TODO: Return error
+		panic(fmt.Sprintf("invalid expression: %#v", from))
 	}
 	return to
 }
@@ -699,6 +700,7 @@ func (c *syntaxConv) next(n int) token.Pos {
 
 func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 	switch from := from.(type) {
+	case nil:
 	case *Comment:
 		to = &ast.Comment{
 			Slash: c.next(len(from.Text)),
@@ -806,6 +808,7 @@ func (c *syntaxConv) specs(from []Declaration) (to []ast.Spec) {
 
 func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	switch from := from.(type) {
+	case nil:
 	case *AddAssign:
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
@@ -1090,7 +1093,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	default:
-		panic(from) // TODO: Return error
+		panic(fmt.Sprintf("invalid statement: %#v", from))
 	}
 	return to
 }
