@@ -657,7 +657,7 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 	return to
 }
 
-func (c *syntaxConv) markup(ss []Syntax) {
+func (c *syntaxConv) markup(ss []Context) {
 	var cg *ast.CommentGroup
 	var lastLine bool // was last syntax item a *Line?
 	for _, s := range ss {
@@ -698,7 +698,7 @@ func (c *syntaxConv) next(n int) token.Pos {
 	return p
 }
 
-func (c *syntaxConv) node(from Syntax) (to ast.Node) {
+func (c *syntaxConv) node(from interface{}) (to ast.Node) {
 	switch from := from.(type) {
 	case nil:
 	case *Comment:
@@ -740,11 +740,11 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			to = n
 		}
 	case *File:
-		c.markup(from.Markup.Before)
+		c.markup(from.Before)
 		c.astFile.Package = c.next(lenPackage)
 		c.astFile.Name = c.expr(from.Package).(*ast.Ident)
 		c.astFile.Decls = c.decls(from.Decls)
-		c.markup(from.Markup.After)
+		c.markup(from.After)
 		to = c.astFile
 	default:
 		if d, ok := from.(Declaration); ok {

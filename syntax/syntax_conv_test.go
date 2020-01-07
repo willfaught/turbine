@@ -7,156 +7,69 @@ import (
 	"github.com/kr/pretty"
 )
 
-func mustToString(s Syntax) string {
-	str, err := ToString(s)
-	if err != nil {
-		panic(err)
-	}
-	return str
+func TestContext(t *testing.T) {
+	// TODO
+	// a := []Context{&Comment{Text: "/*a*/"}}
+	// b := []Context{&Comment{Text: "/*b*/"}}
 }
 
 func TestExpressions(t *testing.T) {
 	t.Parallel()
-	type Test struct {
-		syn Expression
-		str string
-		// node ast.Node
-		// coms []*ast.CommentGroup
-		// lines []int
-	}
-	m := Markup{
-		Before: []Syntax{
-			&Comment{Text: "/*a*/"},
-		},
-		After: []Syntax{
-			&Comment{Text: "/*b*/"},
-		},
-	}
-	tests := []Test{
-		{
-			&Name{Text: "x"},
-			"x",
-		},
-		{
-			&Name{Markup: m, Text: "z"},
-			"/*a*/ z /*b*/",
-		},
-		{
-			&String{Text: `"x"`},
-			`"x"`,
-		},
-		{
-			&String{Text: "`x`"},
-			"`x`",
-		},
-		{
-			&String{Markup: m, Text: `"x"`},
-			`/*a*/ "x" /*b*/`,
-		},
-	}
-	for _, test := range tests {
-		func(test Test) {
-			t.Run(fmt.Sprintf("%#v", test.syn), func(t *testing.T) {
+	for exp, str := range expressionString {
+		func(exp Expression, str string) {
+			t.Run(fmt.Sprintf("%#v", exp), func(t *testing.T) {
 				t.Parallel()
 				if s, err := ToString(&File{
 					Package: &Name{Text: "p"},
 					Decls: []Declaration{
 						&Var{
 							Names:  []*Name{{Text: "_"}},
-							Values: []Expression{test.syn},
+							Values: []Expression{exp},
 						},
 					},
 				}); err != nil {
-					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(test.syn), err)
-				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", test.str); s != e {
-					t.Errorf("Syntax: %s\nString: %#v\ne: %#v", pretty.Sprint(test.syn), s, e)
+					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
+				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
+					t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
+				}
+
+				// Context
+				// a := []Context{&Comment{Text: "/*a*/"}}
+				// b := []Context{&Comment{Text: "/*b*/"}}
+				if s, err := ToString(&File{
+					Package: &Name{Text: "p"},
+					Decls: []Declaration{
+						&Var{
+							Names:  []*Name{{Text: "_"}},
+							Values: []Expression{exp},
+						},
+					},
+				}); err != nil {
+					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
+				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
+					t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
 				}
 			})
-		}(test)
+		}(exp, str)
 	}
 }
 
-func TestStatements(t *testing.T) {
-	tests := []struct {
-		syn Syntax
-		str string
-		// node ast.Node
-		// coms []*ast.CommentGroup
-		// lines []int
-	}{
-		{
-			&Block{
-				List: []Statement{
-					&Return{},
-				},
-			},
-			"{\n\treturn\n}",
-		},
-		{
-			&If{
-				Cond: &Name{Text: "x"},
-				Body: &Block{
-					List: []Statement{
-						&Return{},
-					},
-				},
-			},
-			"if x {\n\treturn\n}",
-		},
-		{
-			&Name{Text: ""},
-			"",
-		},
-		{
-			&Name{Text: "x"},
-			"x",
-		},
-		{
-			&Name{
-				Markup: Markup{
-					Before: []Syntax{
-						&Comment{Text: "/*x*/"},
-					},
-					After: []Syntax{
-						&Comment{Text: "/*y*/"},
-					},
-				},
-				Text: "z",
-			},
-			"/*x*/ z /*y*/",
-		},
-		{
-			&String{Text: ""},
-			"",
-		},
-		{
-			&String{Text: `"x"`},
-			`"x"`,
-		},
-		{
-			&String{Text: "`x`"},
-			"`x`",
-		},
-	}
-	for _, test := range tests {
-
-		if s, err := ToString(test.syn); err != nil {
-			t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(test.syn), err)
-		} else if s != test.str {
-			t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(test.syn), s)
-		}
-	}
+var expressionString = map[Expression]string{
+	&Name{Text: "z"}:     "z",
+	&String{Text: `"z"`}: `"z"`,
+	&String{Text: "`z`"}: "`z`",
 }
 
+/*
 func TestEmpty(t *testing.T) {
-	// p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// f := p.Nodes.Files["/Users/Will/Developer/go/src/github.com/willfaught/turbine/syntax/testdata/empty/empty.go"]
-	// // pretty.Println()
-	// format.Node(os.Stdout, p.Tokens, f)
-	// t.FailNow()
+	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := p.Nodes.Files["/Users/Will/Developer/go/src/github.com/willfaught/turbine/syntax/testdata/empty/empty.go"]
+	// pretty.Println()
+	format.Node(os.Stdout, p.Tokens, f)
+	t.FailNow()
 }
 
 func TestSyntax(t *testing.T) {
@@ -177,78 +90,6 @@ func TestSyntax(t *testing.T) {
 	t.FailNow()
 }
 
-func TestIfSyntax(t *testing.T) {
-	s := &File{
-		Package: &Name{
-			Text: "main",
-		},
-		Decls: []Declaration{
-			&Func{
-				Name: &Name{Text: "f"},
-				Body: &Block{
-					List: []Statement{
-						&If{
-							Init: &Define{Left: []Expression{&Name{Text: "x"}}, Right: []Expression{&Int{Text: "123"}}},
-							Cond: &Less{X: &Name{Text: "x"}, Y: &Name{Text: "y"}},
-							Body: &Block{
-								List: []Statement{
-									&Assign{
-										Markup: Markup{
-											Before: []Syntax{
-												// &Comment{Text: "/*c*/"},
-												&Line{},
-												// &Line{},
-											},
-											After: []Syntax{
-												// &Comment{Text: "/*c*/"},
-												// &Line{},
-												// &Line{},
-											},
-										},
-										Left: []Expression{&Name{
-											Markup: Markup{
-												Before: []Syntax{
-													&Comment{Text: "/*1*/"},
-													// &Line{},
-													// &Line{},
-												},
-												After: []Syntax{
-													&Comment{Text: "/*2*/"},
-													&Line{},
-													&Line{},
-												},
-											},
-											Text: "y",
-										}},
-										Right: []Expression{&Name{
-											Markup: Markup{
-												Before: []Syntax{
-													&Comment{Text: "/*3*/"},
-													// &Line{},
-													// &Line{},
-												},
-												After: []Syntax{
-													&Comment{Text: "/*4*/"},
-													// &Line{},
-													// &Line{},
-												},
-											},
-											Text: "x",
-										}},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	t.Log(mustToString(s))
-	t.FailNow()
-}
-
-/*
 func TestXAssignSyntax(t *testing.T) {
 	s := &File{
 		Package: &Name{
