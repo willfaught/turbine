@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/kr/pretty"
@@ -13,13 +14,100 @@ func TestContext(t *testing.T) {
 	// b := []Context{&Comment{Text: "/*b*/"}}
 }
 
+// TODO: Test Ellipsis markup around Ellipsis.Elem markup in Call
+
 func TestExpressions(t *testing.T) {
 	t.Parallel()
+	x, y, z := &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
+	i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
+	var expressionString = map[Expression]string{
+		&Add{X: z, Y: y}:                        "z + y",
+		&And{X: z, Y: y}:                        "z && y",
+		&AndNot{X: z, Y: y}:                     "z &^ y",
+		&Array{Length: &Ellipsis{}, Element: z}: "[...]z",
+		&Array{Element: z}:                      "[]z",
+		&Array{Length: i1, Element: z}:          "[1]z",
+		&Assert{X: z, Type: y}:                  "z.(y)",
+		&BitAnd{X: z, Y: y}:                     "z & y",
+		&BitOr{X: z, Y: y}:                      "z | y",
+		&Call{Fun: z}:                           "z()",
+		&Call{
+			Fun:  z,
+			Args: []Expression{y},
+		}: "z(y)",
+		&Call{
+			Fun: z,
+			Args: []Expression{
+				y,
+				x,
+			},
+		}: "z(y, x)",
+		&Call{
+			Fun: z,
+			Args: []Expression{
+				&Name{Text: "y"},
+				&Ellipsis{Elem: &Name{Text: "x"}},
+			},
+		}: "z(y, x...)",
+		&Chan{Value: z}:                               "chan z",
+		&ChanIn{Value: z}:                             "<-chan z",
+		&ChanOut{Value: z}:                            "chan<- z",
+		&Composite{Type: z}:                           "z{}",
+		&Composite{Type: z, Elts: []Expression{y}}:    "z{y}",
+		&Composite{Type: z, Elts: []Expression{y, x}}: "z{y, x}",
+		&Composite{
+			Type: z,
+			Elts: []Expression{
+				&KeyValue{Key: y, Value: i1},
+			},
+		}: "z{y: 1}",
+		&Composite{
+			Type: z,
+			Elts: []Expression{
+				&KeyValue{Key: y, Value: i1},
+				&KeyValue{Key: x, Value: i2},
+			},
+		}: "z{y: 1, x: 2}",
+		&Deref{X: z}:        "*z",
+		&Divide{X: z, Y: y}: "z / y",
+		&Ellipsis{}:         "...",
+		&Ellipsis{Elem: z}:  "...z",
+		&Equal{X: z, Y: y}:  "z == y",
+		&Float{Text: "1.0"}: "1.0",
+		&Func{}:             "func()",
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{
+					{
+						Names: []*Name{z},
+						Type:  y,
+					},
+				},
+			},
+		}: "func(z y)",
+		&Greater{X: z, Y: y}:      "z > y",
+		&GreaterEqual{X: z, Y: y}: "z >= y",
+		&Multiply{X: z, Y: y}:     "z * y",
+		&Less{X: z, Y: y}:         "z < y",
+		&LessEqual{X: z, Y: y}:    "z <= y",
+		&Name{Text: "z"}:          "z",
+		&NotEqual{X: z, Y: y}:     "z != y",
+		&Or{X: z, Y: y}:           "z || y",
+		&Remainder{X: z, Y: y}:    "z % y",
+		&ShiftLeft{X: z, Y: y}:    "z << y",
+		&ShiftRight{X: z, Y: y}:   "z >> y",
+		&String{Text: `"z"`}:      `"z"`,
+		&String{Text: "`z`"}:      "`z`",
+		&Subtract{X: z, Y: y}:     "z - y",
+		&Xor{X: z, Y: y}:          "z ^ y",
+	}
+	a := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
+	b := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
 	for exp, str := range expressionString {
 		func(exp Expression, str string) {
 			t.Run(fmt.Sprintf("%#v", exp), func(t *testing.T) {
 				t.Parallel()
-				if s, err := ToString(&File{
+				file := &File{
 					Package: &Name{Text: "p"},
 					Decls: []Declaration{
 						&Var{
@@ -27,37 +115,27 @@ func TestExpressions(t *testing.T) {
 							Values: []Expression{exp},
 						},
 					},
-				}); err != nil {
-					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
-				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
-					t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
 				}
-
-				// Context
-				// a := []Context{&Comment{Text: "/*a*/"}}
-				// b := []Context{&Comment{Text: "/*b*/"}}
-				if s, err := ToString(&File{
-					Package: &Name{Text: "p"},
-					Decls: []Declaration{
-						&Var{
-							Names:  []*Name{{Text: "_"}},
-							Values: []Expression{exp},
-						},
-					},
-				}); err != nil {
-					t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
-				} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
-					t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
-				}
+				t.Run("no context", func(t *testing.T) {
+					if s, err := ToString(file); err != nil {
+						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
+					} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
+						t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
+					}
+				})
+				t.Run("context", func(t *testing.T) {
+					elem := reflect.ValueOf(exp).Elem()
+					elem.FieldByName("Before").Set(b)
+					elem.FieldByName("After").Set(a)
+					if s, err := ToString(file); err != nil {
+						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
+					} else if e := fmt.Sprintf("package p\n\nvar _ = /*b*/ %s /*a*/\n", str); s != e {
+						t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
+					}
+				})
 			})
 		}(exp, str)
 	}
-}
-
-var expressionString = map[Expression]string{
-	&Name{Text: "z"}:     "z",
-	&String{Text: `"z"`}: `"z"`,
-	&String{Text: "`z`"}: "`z`",
 }
 
 /*

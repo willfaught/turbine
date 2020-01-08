@@ -1,5 +1,7 @@
 package syntax
 
+// TODO: Rename Space to Offset or Gap, since it can be for delimiters like {a, b, c}?
+
 import (
 	"bytes"
 	"fmt"
@@ -278,17 +280,33 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		c.markup(from.After)
 	case *Call:
 		c.markup(from.Before)
-		to = &ast.CallExpr{
-			Fun:      c.expr(from.Fun),
-			Lparen:   c.next(lenLparen),
-			Args:     c.exprs(from.Args),
-			Ellipsis: 0, // TODO
-			Rparen:   c.next(lenRparen),
+		call := &ast.CallExpr{
+			Fun:    c.expr(from.Fun),
+			Lparen: c.next(lenLparen),
 		}
+		if l := len(from.Args); l > 0 {
+			args := make([]ast.Expr, l)
+			last := l - 1
+			for i, e := range from.Args[:last] {
+				args[i] = c.expr(e)
+			}
+			if e, ok := from.Args[last].(*Ellipsis); ok {
+				c.markup(e.Before)
+				call.Ellipsis = c.next(lenEllipsis)
+				args[last] = c.expr(e.Elem)
+				c.markup(e.After)
+			} else {
+				args[last] = c.expr(from.Args[last])
+			}
+			call.Args = args
+		}
+		call.Rparen = c.next(lenRparen)
 		c.markup(from.After)
+		to = call
 	case *Chan:
 		c.markup(from.Before)
 		to = &ast.ChanType{
+			Dir:   ast.RECV | ast.SEND,
 			Begin: c.next(lenChan + 1),
 			Value: c.expr(from.Value),
 		}
@@ -296,9 +314,9 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 	case *ChanIn:
 		c.markup(from.Before)
 		to = &ast.ChanType{
+			Dir:   ast.RECV,
 			Begin: c.next(lenChan),
 			Arrow: c.next(lenArrow + 1),
-			Dir:   ast.RECV,
 			Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
@@ -306,9 +324,9 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		c.markup(from.Before)
 		var p = c.next(lenChan + lenArrow + 1)
 		to = &ast.ChanType{
+			Dir:   ast.SEND,
 			Begin: p,
 			Arrow: p,
-			Dir:   ast.SEND,
 			Value: c.expr(from.Value),
 		}
 		c.markup(from.After)
@@ -337,14 +355,13 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 			Y:     c.expr(from.Y),
 		}
 		c.markup(from.After)
-	// TODO:
-	// case *Ellipsis: // TODO: Where is this used?
-	// 	c.markup(from.Before)
-	// 	to = &ast.Ellipsis{
-	// 		Ellipsis: c.next(lenEllipsis),
-	// 		Elt:      c.expr(from.Elt),
-	// 	}
-	// 	c.markup(from.After)
+	case *Ellipsis:
+		c.markup(from.Before)
+		to = &ast.Ellipsis{
+			Ellipsis: c.next(lenEllipsis),
+			Elt:      c.expr(from.Elem),
+		}
+		c.markup(from.After)
 	case *Equal:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
@@ -368,6 +385,12 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 			Func:    c.next(lenFunc),
 			Params:  c.node(from.Parameters).(*ast.FieldList),
 			Results: c.node(from.Results).(*ast.FieldList),
+		}
+		if f.Params == nil {
+			f.Params = &ast.FieldList{
+				Opening: c.next(lenLparen),
+				Closing: c.next(lenRparen),
+			}
 		}
 		if from.Body == nil {
 			to = f
@@ -727,7 +750,7 @@ func (c *syntaxConv) node(from interface{}) (to ast.Node) {
 		c.markup(from.After)
 	case *FieldList:
 		if from == nil {
-			to = (*ast.FieldList)(nil) // TODO: Why?
+			to = (*ast.FieldList)(nil)
 		} else {
 			c.markup(from.Before)
 			n := &ast.FieldList{}

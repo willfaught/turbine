@@ -25,9 +25,9 @@ type Expression interface {
 }
 
 func (*Add) expression()          {}
-func (*Array) expression()        {}
 func (*And) expression()          {}
 func (*AndNot) expression()       {}
+func (*Array) expression()        {}
 func (*Assert) expression()       {}
 func (*BitAnd) expression()       {}
 func (*BitOr) expression()        {}
@@ -38,6 +38,7 @@ func (*ChanOut) expression()      {}
 func (*Composite) expression()    {}
 func (*Deref) expression()        {}
 func (*Divide) expression()       {}
+func (*Ellipsis) expression()     {}
 func (*Equal) expression()        {}
 func (*Float) expression()        {}
 func (*Func) expression()         {}
@@ -51,7 +52,6 @@ func (*KeyValue) expression()     {}
 func (*Less) expression()         {}
 func (*LessEqual) expression()    {}
 func (*Map) expression()          {}
-func (*Remainder) expression()    {}
 func (*Multiply) expression()     {}
 func (*Name) expression()         {}
 func (*Negate) expression()       {}
@@ -62,6 +62,7 @@ func (*Paren) expression()        {}
 func (*Pointer) expression()      {}
 func (*Receive) expression()      {}
 func (*Ref) expression()          {}
+func (*Remainder) expression()    {}
 func (*Rune) expression()         {}
 func (*Selector) expression()     {}
 func (*ShiftLeft) expression()    {}
@@ -99,9 +100,9 @@ func (*Goto) statement()             {}
 func (*If) statement()               {}
 func (*Inc) statement()              {}
 func (*Label) statement()            {}
-func (*RemainderAssign) statement()  {}
 func (*MultiplyAssign) statement()   {}
 func (*Range) statement()            {}
+func (*RemainderAssign) statement()  {}
 func (*Return) statement()           {}
 func (*Select) statement()           {}
 func (*Send) statement()             {}
@@ -146,6 +147,7 @@ func (*Define) syntax()           {}
 func (*Deref) syntax()            {}
 func (*Divide) syntax()           {}
 func (*DivideAssign) syntax()     {}
+func (*Ellipsis) syntax()         {}
 func (*Equal) syntax()            {}
 func (*Fallthrough) syntax()      {}
 func (*Field) syntax()            {}
@@ -171,9 +173,6 @@ func (*Label) syntax()            {}
 func (*Less) syntax()             {}
 func (*LessEqual) syntax()        {}
 func (*Map) syntax()              {}
-func (*Markup) syntax()           {}
-func (*Remainder) syntax()        {}
-func (*RemainderAssign) syntax()  {}
 func (*Multiply) syntax()         {}
 func (*MultiplyAssign) syntax()   {}
 func (*Name) syntax()             {}
@@ -186,6 +185,8 @@ func (*Pointer) syntax()          {}
 func (*Range) syntax()            {}
 func (*Receive) syntax()          {}
 func (*Ref) syntax()              {}
+func (*Remainder) syntax()        {}
+func (*RemainderAssign) syntax()  {}
 func (*Return) syntax()           {}
 func (*Rune) syntax()             {}
 func (*Select) syntax()           {}
@@ -207,6 +208,16 @@ func (*Var) syntax()              {}
 func (*VarList) syntax()          {}
 func (*Xor) syntax()              {}
 func (*XorAssign) syntax()        {}
+
+// Context
+
+type Context interface {
+	context()
+}
+
+func (*Comment) context() {}
+func (*Line) context()    {}
+func (*Space) context()   {}
 
 type Array struct {
 	Before  []Context
@@ -466,11 +477,10 @@ type Break struct {
 }
 
 type Call struct {
-	Before   []Context
-	After    []Context
-	Fun      Expression
-	Args     []Expression
-	Ellipsis bool
+	Before []Context
+	After  []Context
+	Fun    Expression
+	Args   []Expression
 }
 
 type Case struct {
@@ -547,13 +557,13 @@ type Defer struct {
 	Call   *Call
 }
 
-// Used for [...]T array type.
-// type Ellipsis struct {
-// 	Before []Context
-//	After  []Context
-// 	Elt Expression
-// }
+type Ellipsis struct {
+	Before []Context
+	After  []Context
+	Elem   Expression
+}
 
+// TODO:
 // type Empty struct {
 // 	Before []Context
 //	After  []Context
@@ -698,19 +708,6 @@ type Map struct {
 	After  []Context
 	Key    Expression
 	Value  Expression
-}
-
-type Context interface {
-	context()
-}
-
-func (*Line) context()    {}
-func (*Comment) context() {}
-func (*Space) context()   {}
-
-type Markup struct {
-	After  []Syntax
-	Before []Syntax
 }
 
 type Name struct {
