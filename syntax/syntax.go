@@ -173,6 +173,8 @@ func (*Label) syntax()            {}
 func (*Less) syntax()             {}
 func (*LessEqual) syntax()        {}
 func (*Map) syntax()              {}
+func (*Method) syntax()           {}
+func (*MethodList) syntax()       {}
 func (*Multiply) syntax()         {}
 func (*MultiplyAssign) syntax()   {}
 func (*Name) syntax()             {}
@@ -180,10 +182,13 @@ func (*Negate) syntax()           {}
 func (*Not) syntax()              {}
 func (*NotEqual) syntax()         {}
 func (*Or) syntax()               {}
+func (*Param) syntax()            {}
+func (*ParamList) syntax()        {}
 func (*Paren) syntax()            {}
 func (*Pointer) syntax()          {}
 func (*Range) syntax()            {}
 func (*Receive) syntax()          {}
+func (*Receiver) syntax()         {}
 func (*Ref) syntax()              {}
 func (*Remainder) syntax()        {}
 func (*RemainderAssign) syntax()  {}
@@ -684,7 +689,7 @@ type Int struct {
 type Interface struct {
 	Before  []Context
 	After   []Context
-	Methods *FieldList
+	Methods *MethodList
 }
 
 type KeyValue struct {
@@ -710,16 +715,50 @@ type Map struct {
 	Value  Expression
 }
 
+type Method struct {
+	Before  []Context
+	After   []Context
+	Name    *Name
+	Params  *ParamList
+	Results *ParamList
+}
+
+type MethodList struct {
+	Before []Context
+	After  []Context
+	List   []*Method
+}
+
 type Name struct {
 	Before []Context
 	After  []Context
 	Text   string
 }
 
+type Param struct {
+	Before []Context
+	After  []Context
+	Names  []*Name
+	Type   Expression
+}
+
+type ParamList struct {
+	Before []Context
+	After  []Context
+	List   []*Param
+}
+
 type Paren struct {
 	Before []Context
 	After  []Context
 	X      Expression
+}
+
+type Receiver struct {
+	Before []Context
+	After  []Context
+	Name   *Name
+	Type   Expression
 }
 
 type Range struct {
@@ -854,5 +893,5 @@ type VarList struct {
 	Before  []Context
 	After   []Context
 	Between []Context
-	List    []Declaration
+	List    []Declaration // TODO: Change to []*Var
 }

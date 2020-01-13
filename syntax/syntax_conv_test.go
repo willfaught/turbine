@@ -18,7 +18,11 @@ func TestContext(t *testing.T) {
 
 func TestExpressions(t *testing.T) {
 	t.Parallel()
-	x, y, z := &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
+	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
+	// var v [13]*Name
+	// for i := range v {
+	// 	v[i] = &Name{Text: fmt.Sprintf("v%d", i)}
+	// }
 	i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
 	var expressionString = map[Expression]string{
 		&Add{X: z, Y: y}:                        "z + y",
@@ -77,32 +81,150 @@ func TestExpressions(t *testing.T) {
 		&Func{}:             "func()",
 		&Func{
 			Parameters: &FieldList{
+				List: []*Field{{Type: z}},
+			},
+		}: "func(z)",
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{{Type: z}, {Type: y}},
+			},
+		}: "func(z, y)",
+		&Func{
+			Parameters: &FieldList{
 				List: []*Field{
-					{
-						Names: []*Name{z},
-						Type:  y,
-					},
+					{Names: []*Name{z}, Type: y},
 				},
 			},
 		}: "func(z y)",
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{
+					{Names: []*Name{z}, Type: y},
+					{Names: []*Name{x}, Type: w},
+				},
+			},
+		}: "func(z y, x w)",
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{
+					{Names: []*Name{z, y}, Type: x},
+				},
+			},
+		}: "func(z, y x)",
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{
+					{Names: []*Name{z, y}, Type: x},
+					{Names: []*Name{w, v}, Type: u},
+				},
+			},
+		}: "func(z, y x, w, v u)",
+		&Func{
+			Results: &FieldList{
+				List: []*Field{{Type: z}},
+			},
+		}: "func() z",
+		// TODO: More Func tests
+		&Func{
+			Parameters: &FieldList{
+				List: []*Field{
+					{Names: []*Name{z, y}, Type: x},
+					{Names: []*Name{w, v}, Type: u},
+				},
+			},
+			Results: &FieldList{
+				List: []*Field{
+					{Names: []*Name{z, y}, Type: x},
+					{Names: []*Name{w, v}, Type: u},
+				},
+			},
+			Body: &Block{
+				List: []Statement{&Return{}},
+			},
+		}: "func(z, y x, w, v u) (z, y x, w, v u) { return }",
 		&Greater{X: z, Y: y}:      "z > y",
 		&GreaterEqual{X: z, Y: y}: "z >= y",
-		&Multiply{X: z, Y: y}:     "z * y",
-		&Less{X: z, Y: y}:         "z < y",
-		&LessEqual{X: z, Y: y}:    "z <= y",
-		&Name{Text: "z"}:          "z",
-		&NotEqual{X: z, Y: y}:     "z != y",
-		&Or{X: z, Y: y}:           "z || y",
-		&Remainder{X: z, Y: y}:    "z % y",
-		&ShiftLeft{X: z, Y: y}:    "z << y",
-		&ShiftRight{X: z, Y: y}:   "z >> y",
-		&String{Text: `"z"`}:      `"z"`,
-		&String{Text: "`z`"}:      "`z`",
-		&Subtract{X: z, Y: y}:     "z - y",
-		&Xor{X: z, Y: y}:          "z ^ y",
+		&Imag{Text: "1i"}:         "1i",
+		&Index{X: z, Index: y}:    "z[y]",
+		&Int{Text: "1"}:           "1",
+		&Interface{}:              "interface{}",
+		&Interface{
+			Methods: &MethodList{
+				List: []*Method{
+					{
+						Name: z,
+					},
+				},
+			},
+		}: "interface{ z() }",
+		&Interface{
+			Methods: &MethodList{
+				List: []*Method{
+					{
+						Name: &Name{Text: "m1"},
+						Params: &ParamList{List: []*Param{
+							{
+								Names: []*Name{z, y},
+								Type:  x,
+							},
+							{
+								Names: []*Name{w, v},
+								Type:  u,
+							},
+						}},
+						Results: &ParamList{List: []*Param{
+							{
+								Names: []*Name{z, y},
+								Type:  x,
+							},
+							{
+								Names: []*Name{w, v},
+								Type:  u,
+							},
+						}},
+					},
+					{
+						Name: &Name{Text: "m2"},
+						Params: &ParamList{List: []*Param{
+							{
+								Names: []*Name{z, y},
+								Type:  x,
+							},
+							{
+								Names: []*Name{w, v},
+								Type:  u,
+							},
+						}},
+						Results: &ParamList{List: []*Param{
+							{
+								Names: []*Name{z, y},
+								Type:  x,
+							},
+							{
+								Names: []*Name{w, v},
+								Type:  u,
+							},
+						}},
+					},
+				},
+			},
+		}: "interface {\n\tm1(z, y x, w, v u) (z, y x, w, v u)\n\tm2(z, y x, w, v u) (z, y x, w, v u)\n}",
+		&Multiply{X: z, Y: y}:   "z * y",
+		&Less{X: z, Y: y}:       "z < y",
+		&LessEqual{X: z, Y: y}:  "z <= y",
+		&Name{Text: "z"}:        "z",
+		&NotEqual{X: z, Y: y}:   "z != y",
+		&Or{X: z, Y: y}:         "z || y",
+		&Remainder{X: z, Y: y}:  "z % y",
+		&ShiftLeft{X: z, Y: y}:  "z << y",
+		&ShiftRight{X: z, Y: y}: "z >> y",
+		&String{Text: `"z"`}:    `"z"`,
+		&String{Text: "`z`"}:    "`z`",
+		&Subtract{X: z, Y: y}:   "z - y",
+		&Xor{X: z, Y: y}:        "z ^ y",
 	}
-	a := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
-	b := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
+	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
+	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
 	for exp, str := range expressionString {
 		func(exp Expression, str string) {
 			t.Run(fmt.Sprintf("%#v", exp), func(t *testing.T) {
@@ -117,20 +239,20 @@ func TestExpressions(t *testing.T) {
 					},
 				}
 				t.Run("no context", func(t *testing.T) {
-					if s, err := ToString(file); err != nil {
+					if a, err := ToString(file); err != nil {
 						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
-					} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); s != e {
-						t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
+					} else if e := fmt.Sprintf("package p\n\nvar _ = %s\n", str); a != e {
+						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(exp))
 					}
 				})
 				t.Run("context", func(t *testing.T) {
 					elem := reflect.ValueOf(exp).Elem()
-					elem.FieldByName("Before").Set(b)
-					elem.FieldByName("After").Set(a)
-					if s, err := ToString(file); err != nil {
+					elem.FieldByName("Before").Set(before)
+					elem.FieldByName("After").Set(after)
+					if a, err := ToString(file); err != nil {
 						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
-					} else if e := fmt.Sprintf("package p\n\nvar _ = /*b*/ %s /*a*/\n", str); s != e {
-						t.Errorf("Syntax: %s\nString: %s", pretty.Sprint(exp), s)
+					} else if e := fmt.Sprintf("package p\n\nvar _ = /*b*/ %s /*a*/\n", str); a != e {
+						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(exp))
 					}
 				})
 			})

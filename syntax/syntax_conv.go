@@ -682,14 +682,18 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 
 func (c *syntaxConv) markup(ss []Context) {
 	var cg *ast.CommentGroup
-	var lastLine bool // was last syntax item a *Line?
+	var lastLine bool // Whether the last item was a line
 	for _, s := range ss {
 		switch s := s.(type) {
 		case *Comment:
 			if cg == nil {
 				cg = &ast.CommentGroup{}
 			}
-			cg.List = append(cg.List, c.node(s).(*ast.Comment)) // TODO: Add newlines in comment
+			cg.List = append(cg.List, &ast.Comment{
+				Slash: c.next(len(s.Text)),
+				Text:  s.Text,
+			})
+			// TODO: Add newlines in comment
 			lastLine = false
 		case *Line:
 			if lastLine && cg != nil {
@@ -706,7 +710,7 @@ func (c *syntaxConv) markup(ss []Context) {
 				c.next(1)
 			}
 		default:
-			panic(fmt.Sprintf("invalid markup: %#v", s)) // TODO: Remove
+			panic(fmt.Sprintf("invalid context: %#v", s)) // TODO: Remove
 		}
 	}
 	if cg != nil {
@@ -721,46 +725,52 @@ func (c *syntaxConv) next(n int) token.Pos {
 	return p
 }
 
-func (c *syntaxConv) node(from interface{}) (to ast.Node) {
+func (c *syntaxConv) results(from *ParamList) (to *ast.FieldList) {
+	if from == nil {
+		return nil
+	}
+	parens := len(from.List) != 1 || len(from.List[0].Names) > 0
+	c.markup(from.Before)
+	to = &ast.FieldList{}
+	if parens {
+		to.Opening = c.next(lenLparen)
+	}
+	for _, p := range from.List {
+		to.List = append(to.List, c.node(p).(*ast.Field))
+	}
+	if parens {
+		to.Closing = c.next(lenRparen)
+	}
+	c.markup(from.After)
+	return to
+}
+
+func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 	switch from := from.(type) {
 	case nil:
-	case *Comment:
-		to = &ast.Comment{
-			Slash: c.next(len(from.Text)),
-			Text:  from.Text,
-		}
-	// TODO:
-	// case *CommentGroup:
-	// 	var cs []*ast.Comment
-	// 	for _, com := range from.List {
-	// 		cs = append(cs, c.node(com).(*ast.Comment))
-	// 	}
-	// 	to = &ast.CommentGroup{
-	// 		List: cs,
-	// 	}
 	case *Field:
 		c.markup(from.Before)
-		f := &ast.Field{}
-		f.Names = c.idents(from.Names)
+		field := &ast.Field{}
+		field.Names = c.idents(from.Names)
 		if b, ok := c.expr(from.Tag).(*ast.BasicLit); ok {
-			f.Tag = b
+			field.Tag = b
 		}
-		f.Type = c.expr(from.Type)
-		to = f
+		field.Type = c.expr(from.Type)
 		c.markup(from.After)
+		to = field
 	case *FieldList:
 		if from == nil {
 			to = (*ast.FieldList)(nil)
 		} else {
 			c.markup(from.Before)
-			n := &ast.FieldList{}
-			n.Opening = c.next(1) // Either parens or curly braces
+			fieldList := &ast.FieldList{}
+			fieldList.Opening = c.next(lenLbrace)
 			for _, f := range from.List {
-				n.List = append(n.List, c.node(f).(*ast.Field))
+				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 			}
-			n.Closing = c.next(1) // Either parens or curly braces
+			fieldList.Closing = c.next(lenRbrace)
 			c.markup(from.After)
-			to = n
+			to = fieldList
 		}
 	case *File:
 		c.markup(from.Before)
@@ -769,6 +779,54 @@ func (c *syntaxConv) node(from interface{}) (to ast.Node) {
 		c.astFile.Decls = c.decls(from.Decls)
 		c.markup(from.After)
 		to = c.astFile
+	case *Method:
+		c.markup(from.Before)
+		to = &ast.Field{
+			Names: []*ast.Ident{c.expr(from.Name).(*ast.Ident)},
+			Type: &ast.FuncType{
+				Params:  c.node(from.Params).(*ast.FieldList),
+				Results: c.results(from.Results),
+			},
+		}
+		c.markup(from.After)
+	case *MethodList:
+		if from == nil {
+			to = &ast.FieldList{
+				Opening: c.next(lenLbrace),
+				Closing: c.next(lenRbrace),
+			}
+		} else {
+			c.markup(from.Before)
+			fieldList := &ast.FieldList{}
+			fieldList.Opening = c.next(lenLbrace)
+			for _, f := range from.List {
+				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
+			}
+			fieldList.Closing = c.next(lenRbrace)
+			c.markup(from.After)
+			to = fieldList
+		}
+	case *Param:
+		c.markup(from.Before)
+		to = &ast.Field{
+			Names: c.idents(from.Names),
+			Type:  c.expr(from.Type),
+		}
+		c.markup(from.After)
+	case *ParamList:
+		if from == nil {
+			to = (*ast.FieldList)(nil)
+		} else {
+			c.markup(from.Before)
+			fieldList := &ast.FieldList{}
+			fieldList.Opening = c.next(lenLparen)
+			for _, f := range from.List {
+				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
+			}
+			fieldList.Closing = c.next(lenRparen)
+			c.markup(from.After)
+			to = fieldList
+		}
 	default:
 		if d, ok := from.(Declaration); ok {
 			to = c.decl(d)
