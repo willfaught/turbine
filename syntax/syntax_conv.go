@@ -11,52 +11,63 @@ import (
 )
 
 var (
-	lenAdd       = len(token.ADD.String())
-	lenAnd       = len(token.AND.String())
-	lenAndNot    = len(token.AND_NOT.String())
-	lenArrow     = len(token.ARROW.String())
-	lenAssign    = len(token.ASSIGN.String())
-	lenChan      = len(token.CHAN.String())
-	lenColon     = len(token.COLON.String())
-	lenConst     = len(token.CONST.String())
-	lenDefine    = len(token.DEFINE.String())
-	lenQuo       = len(token.QUO.String())
-	lenEllipsis  = len(token.ELLIPSIS.String())
-	lenEql       = len(token.EQL.String())
-	lenFunc      = len(token.FUNC.String())
-	lenFor       = len(token.FOR.String())
-	lenGeq       = len(token.GEQ.String())
-	lenGtr       = len(token.GTR.String())
-	lenImport    = len(token.IMPORT.String())
-	lenInterface = len(token.INTERFACE.String())
-	lenLand      = len(token.LAND.String())
-	lenLbrace    = len(token.LBRACE.String())
-	lenLbrack    = len(token.LBRACK.String())
-	lenLeq       = len(token.LEQ.String())
-	lenLss       = len(token.LSS.String())
-	lenLor       = len(token.LOR.String())
-	lenLparen    = len(token.LPAREN.String())
-	lenMap       = len(token.MAP.String())
-	lenMul       = len(token.MUL.String())
-	lenNeq       = len(token.NEQ.String())
-	lenNewline   = 1
-	lenNot       = len(token.NOT.String())
-	lenOr        = len(token.OR.String())
-	lenPackage   = len(token.PACKAGE.String())
-	lenPeriod    = len(token.PERIOD.String())
-	lenRbrace    = len(token.RBRACE.String())
-	lenRbrack    = len(token.RBRACK.String())
-	lenRem       = len(token.REM.String())
-	lenRparen    = len(token.RPAREN.String())
-	lenShl       = len(token.SHL.String())
-	lenShr       = len(token.SHR.String())
-	lenSpace     = 1
-	lenStruct    = len(token.STRUCT.String())
-	lenSub       = len(token.SUB.String())
-	lenSwitch    = len(token.SWITCH.String())
-	lenType      = len(token.TYPE.String())
-	lenVar       = len(token.VAR.String())
-	lenXor       = len(token.XOR.String())
+	lenAdd          = len(token.ADD.String())
+	lenAddAssign    = len(token.ADD_ASSIGN.String())
+	lenAnd          = len(token.AND.String())
+	lenAndAssign    = len(token.AND_ASSIGN.String())
+	lenAndNot       = len(token.AND_NOT.String())
+	lenAndNotAssign = len(token.AND_NOT_ASSIGN.String())
+	lenArrow        = len(token.ARROW.String())
+	lenAssign       = len(token.ASSIGN.String())
+	lenChan         = len(token.CHAN.String())
+	lenColon        = len(token.COLON.String())
+	lenConst        = len(token.CONST.String())
+	lenDefine       = len(token.DEFINE.String())
+	lenEllipsis     = len(token.ELLIPSIS.String())
+	lenEql          = len(token.EQL.String())
+	lenFor          = len(token.FOR.String())
+	lenFunc         = len(token.FUNC.String())
+	lenGeq          = len(token.GEQ.String())
+	lenGtr          = len(token.GTR.String())
+	lenImport       = len(token.IMPORT.String())
+	lenInterface    = len(token.INTERFACE.String())
+	lenLand         = len(token.LAND.String())
+	lenLbrace       = len(token.LBRACE.String())
+	lenLbrack       = len(token.LBRACK.String())
+	lenLeq          = len(token.LEQ.String())
+	lenLor          = len(token.LOR.String())
+	lenLparen       = len(token.LPAREN.String())
+	lenLss          = len(token.LSS.String())
+	lenMap          = len(token.MAP.String())
+	lenMul          = len(token.MUL.String())
+	lenMulAssign    = len(token.MUL_ASSIGN.String())
+	lenNeq          = len(token.NEQ.String())
+	lenNewline      = 1
+	lenNot          = len(token.NOT.String())
+	lenOr           = len(token.OR.String())
+	lenOrAssign     = len(token.OR_ASSIGN.String())
+	lenPackage      = len(token.PACKAGE.String())
+	lenPeriod       = len(token.PERIOD.String())
+	lenQuo          = len(token.QUO.String())
+	lenQuoAssign    = len(token.QUO_ASSIGN.String())
+	lenRbrace       = len(token.RBRACE.String())
+	lenRbrack       = len(token.RBRACK.String())
+	lenRem          = len(token.REM.String())
+	lenRemAssign    = len(token.REM_ASSIGN.String())
+	lenRparen       = len(token.RPAREN.String())
+	lenShl          = len(token.SHL.String())
+	lenShlAssign    = len(token.SHL_ASSIGN.String())
+	lenShr          = len(token.SHR.String())
+	lenShrAssign    = len(token.SHR_ASSIGN.String())
+	lenSpace        = 1
+	lenStruct       = len(token.STRUCT.String())
+	lenSub          = len(token.SUB.String())
+	lenSubAssign    = len(token.SUB_ASSIGN.String())
+	lenSwitch       = len(token.SWITCH.String())
+	lenType         = len(token.TYPE.String())
+	lenVar          = len(token.VAR.String())
+	lenXor          = len(token.XOR.String())
+	lenXorAssign    = len(token.XOR_ASSIGN.String())
 )
 
 func ToNode(s Syntax) (*token.FileSet, ast.Node) {
@@ -901,7 +912,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenAddAssign),
 			Tok:    token.ADD_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -910,7 +921,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenAndNotAssign),
 			Tok:    token.AND_NOT_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -928,7 +939,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenAndAssign),
 			Tok:    token.AND_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -937,7 +948,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenOrAssign),
 			Tok:    token.OR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1006,7 +1017,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenQuoAssign),
 			Tok:    token.QUO_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1071,7 +1082,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenMulAssign),
 			Tok:    token.MUL_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1101,7 +1112,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenRemAssign),
 			Tok:    token.REM_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1130,7 +1141,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenShlAssign),
 			Tok:    token.SHL_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1139,7 +1150,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenShrAssign),
 			Tok:    token.SHR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
@@ -1148,26 +1159,30 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenSubAssign),
 			Tok:    token.SUB_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
 		c.markup(from.After)
 	case *Switch:
 		c.markup(from.Before)
+		body := from.Body
+		if body == nil {
+			body = &Block{}
+		}
 		if from.Type == nil {
 			to = &ast.SwitchStmt{
 				Switch: c.next(lenSwitch),
 				Init:   c.stmt(from.Init),
 				Tag:    c.expr(from.Value),
-				Body:   c.stmt(from.Body).(*ast.BlockStmt),
+				Body:   c.stmt(body).(*ast.BlockStmt),
 			}
 		} else {
 			to = &ast.TypeSwitchStmt{
 				Switch: c.next(lenSwitch),
 				Init:   c.stmt(from.Init),
 				Assign: c.stmt(from.Type),
-				Body:   c.stmt(from.Body).(*ast.BlockStmt),
+				Body:   c.stmt(body).(*ast.BlockStmt),
 			}
 		}
 		c.markup(from.After)
@@ -1175,7 +1190,7 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
-			TokPos: c.next(lenAssign),
+			TokPos: c.next(lenXorAssign),
 			Tok:    token.XOR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}

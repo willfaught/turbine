@@ -19,12 +19,10 @@ func TestContext(t *testing.T) {
 func TestToString_expressions(t *testing.T) {
 	t.Parallel()
 	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
-	// var v [13]*Name
-	// for i := range v {
-	// 	v[i] = &Name{Text: fmt.Sprintf("v%d", i)}
-	// }
 	i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
-	var expressionString = map[Expression]string{
+	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
+	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
+	for exp, str := range map[Expression]string{
 		&Add{X: z, Y: y}:                        "z + y",
 		&And{X: z, Y: y}:                        "z && y",
 		&AndNot{X: z, Y: y}:                     "z &^ y",
@@ -264,10 +262,7 @@ func TestToString_expressions(t *testing.T) {
 		}: "struct {\n\tz\n\tz, y x\n\tw, v u\n}",
 		&Subtract{X: z, Y: y}: "z - y",
 		&Xor{X: z, Y: y}:      "z ^ y",
-	}
-	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
-	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
-	for exp, str := range expressionString {
+	} {
 		func(exp Expression, str string) {
 			t.Run(fmt.Sprintf("%#v", exp), func(t *testing.T) {
 				t.Parallel()
@@ -299,6 +294,54 @@ func TestToString_expressions(t *testing.T) {
 				})
 			})
 		}(exp, str)
+	}
+}
+
+func TestToString_statements(t *testing.T) {
+	t.Parallel()
+	_, _, _, _, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
+	//i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
+	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
+	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
+	for state, str := range map[Statement]string{
+		&AddAssign{Left: []Expression{z}, Right: []Expression{y}}: "z += y",
+	} {
+		func(state Statement, str string) {
+			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {
+				t.Parallel()
+				file := &File{
+					Package: &Name{Text: "p"},
+					Decls: []Declaration{
+						&Func{
+							Name: &Name{Text: "f"},
+							Body: &Block{
+								List: []Statement{
+									&Switch{After: []Context{&Line{}}},
+									state,
+								},
+							},
+						},
+					},
+				}
+				t.Run("no context", func(t *testing.T) {
+					if a, err := ToString(file); err != nil {
+						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(state), err)
+					} else if e := fmt.Sprintf("package p\n\nfunc f() {\n\tswitch {\n\t}\n\t%s\n}\n", str); a != e {
+						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(state))
+					}
+				})
+				t.Run("context", func(t *testing.T) {
+					elem := reflect.ValueOf(state).Elem()
+					elem.FieldByName("Before").Set(before)
+					elem.FieldByName("After").Set(after)
+					if a, err := ToString(file); err != nil {
+						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(state), err)
+					} else if e := fmt.Sprintf("package p\n\nfunc f() {\n\tswitch {\n\t}\n\t/*b*/ %s /*a*/\n}\n", str); a != e {
+						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(state))
+					}
+				})
+			})
+		}(state, str)
 	}
 }
 
