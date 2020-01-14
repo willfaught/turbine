@@ -619,7 +619,7 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 			Low:    c.expr(from.Low),
 			High:   c.expr(from.High),
 			Max:    c.expr(from.Max),
-			Slice3: from.Max != nil, // TODO: Test
+			Slice3: from.Max != nil,
 			Rbrack: c.next(lenRbrack),
 		}
 		c.markup(from.After)
@@ -636,12 +636,19 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		c.markup(from.After)
 	case *Struct:
 		c.markup(from.Before)
-		to = &ast.StructType{
+		structType := &ast.StructType{
 			Struct:     c.next(lenStruct),
 			Fields:     c.node(from.Fields).(*ast.FieldList),
 			Incomplete: false, // TODO: What is this for?
 		}
+		if structType.Fields == nil {
+			structType.Fields = &ast.FieldList{
+				Opening: c.next(lenLbrace),
+				Closing: c.next(lenRbrace),
+			}
+		}
 		c.markup(from.After)
+		to = structType
 	case *Subtract:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{

@@ -16,7 +16,7 @@ func TestContext(t *testing.T) {
 
 // TODO: Test Ellipsis markup around Ellipsis.Elem markup in Call
 
-func TestExpressions(t *testing.T) {
+func TestToString_expressions(t *testing.T) {
 	t.Parallel()
 	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
 	// var v [13]*Name
@@ -209,19 +209,61 @@ func TestExpressions(t *testing.T) {
 				},
 			},
 		}: "interface {\n\tm1(z, y x, w, v u) (z, y x, w, v u)\n\tm2(z, y x, w, v u) (z, y x, w, v u)\n}",
-		&Multiply{X: z, Y: y}:   "z * y",
-		&Less{X: z, Y: y}:       "z < y",
-		&LessEqual{X: z, Y: y}:  "z <= y",
-		&Name{Text: "z"}:        "z",
-		&NotEqual{X: z, Y: y}:   "z != y",
-		&Or{X: z, Y: y}:         "z || y",
-		&Remainder{X: z, Y: y}:  "z % y",
-		&ShiftLeft{X: z, Y: y}:  "z << y",
-		&ShiftRight{X: z, Y: y}: "z >> y",
-		&String{Text: `"z"`}:    `"z"`,
-		&String{Text: "`z`"}:    "`z`",
-		&Subtract{X: z, Y: y}:   "z - y",
-		&Xor{X: z, Y: y}:        "z ^ y",
+		&KeyValue{Key: z, Value: y}:           "z: y",
+		&Less{X: z, Y: y}:                     "z < y",
+		&LessEqual{X: z, Y: y}:                "z <= y",
+		&Map{Key: z, Value: y}:                "map[z]y",
+		&Multiply{X: z, Y: y}:                 "z * y",
+		&Name{Text: "z"}:                      "z",
+		&Negate{X: z}:                         "-z",
+		&Not{X: z}:                            "!z",
+		&NotEqual{X: z, Y: y}:                 "z != y",
+		&Or{X: z, Y: y}:                       "z || y",
+		&Paren{X: z}:                          "(z)",
+		&Pointer{X: z}:                        "*z",
+		&Receive{X: z}:                        "<-z",
+		&Ref{X: z}:                            "&z",
+		&Remainder{X: z, Y: y}:                "z % y",
+		&Rune{Text: "'z'"}:                    "'z'",
+		&Selector{X: z, Sel: y}:               "z.y",
+		&ShiftLeft{X: z, Y: y}:                "z << y",
+		&ShiftRight{X: z, Y: y}:               "z >> y",
+		&Slice{X: z}:                          "z[:]",
+		&Slice{X: z, Low: y}:                  "z[y:]",
+		&Slice{X: z, High: y}:                 "z[:y]",
+		&Slice{X: z, Low: y, High: x}:         "z[y:x]",
+		&Slice{X: z, Low: y, High: x, Max: w}: "z[y:x:w]",
+		&String{Text: `"z"`}:                  `"z"`,
+		&String{Text: "`z`"}:                  "`z`",
+		&Struct{}:                             "struct{}",
+		&Struct{
+			Fields: &FieldList{
+				List: []*Field{
+					{
+						Type: z,
+					},
+				},
+			},
+		}: "struct{ z }",
+		&Struct{
+			Fields: &FieldList{
+				List: []*Field{
+					{
+						Type: z,
+					},
+					{
+						Names: []*Name{z, y},
+						Type:  x,
+					},
+					{
+						Names: []*Name{w, v},
+						Type:  u,
+					},
+				},
+			},
+		}: "struct {\n\tz\n\tz, y x\n\tw, v u\n}",
+		&Subtract{X: z, Y: y}: "z - y",
+		&Xor{X: z, Y: y}:      "z ^ y",
 	}
 	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
 	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
