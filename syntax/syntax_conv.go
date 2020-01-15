@@ -19,17 +19,25 @@ var (
 	lenAndNotAssign = len(token.AND_NOT_ASSIGN.String())
 	lenArrow        = len(token.ARROW.String())
 	lenAssign       = len(token.ASSIGN.String())
+	lenBreak        = len(token.BREAK.String())
 	lenChan         = len(token.CHAN.String())
 	lenColon        = len(token.COLON.String())
+	lenContinue     = len(token.CONTINUE.String())
 	lenConst        = len(token.CONST.String())
+	lenDec          = len(token.DEC.String())
+	lenDefer        = len(token.DEFER.String())
 	lenDefine       = len(token.DEFINE.String())
 	lenEllipsis     = len(token.ELLIPSIS.String())
 	lenEql          = len(token.EQL.String())
+	lenFallthrough  = len(token.FALLTHROUGH.String())
 	lenFor          = len(token.FOR.String())
 	lenFunc         = len(token.FUNC.String())
 	lenGeq          = len(token.GEQ.String())
 	lenGtr          = len(token.GTR.String())
+	lenGo           = len(token.GO.String())
+	lenGoto         = len(token.GOTO.String())
 	lenImport       = len(token.IMPORT.String())
+	lenInc          = len(token.INC.String())
 	lenInterface    = len(token.INTERFACE.String())
 	lenLand         = len(token.LAND.String())
 	lenLbrace       = len(token.LBRACE.String())
@@ -54,7 +62,9 @@ var (
 	lenRbrack       = len(token.RBRACK.String())
 	lenRem          = len(token.REM.String())
 	lenRemAssign    = len(token.REM_ASSIGN.String())
+	lenReturn       = len(token.RETURN.String())
 	lenRparen       = len(token.RPAREN.String())
+	lenSelect       = len(token.SELECT.String())
 	lenShl          = len(token.SHL.String())
 	lenShlAssign    = len(token.SHL_ASSIGN.String())
 	lenShr          = len(token.SHR.String())
@@ -82,20 +92,6 @@ func ToString(s Syntax) (string, error) {
 		return "", fmt.Errorf("cannot format node: %w", err)
 	}
 	return b.String(), nil
-}
-
-func blockStmt(s ast.Stmt) *ast.BlockStmt {
-	if s == nil {
-		return nil
-	}
-	return s.(*ast.BlockStmt)
-}
-
-func ident(e ast.Expr) *ast.Ident {
-	if e == nil {
-		return nil
-	}
-	return e.(*ast.Ident)
 }
 
 type syntaxConv struct {
@@ -508,15 +504,16 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.markup(from.After)
 	case *Name:
-		if from == nil { // TODO: Why is this needed?
-			return nil
+		if from == nil { // Branch labels, import aliases
+			to = (*ast.Ident)(nil)
+		} else {
+			c.markup(from.Before)
+			to = &ast.Ident{
+				NamePos: c.next(len(from.Text)),
+				Name:    from.Text,
+			}
+			c.markup(from.After)
 		}
-		c.markup(from.Before)
-		to = &ast.Ident{
-			NamePos: c.next(len(from.Text)),
-			Name:    from.Text,
-		}
-		c.markup(from.After)
 	case *Negate:
 		c.markup(from.Before)
 		to = &ast.UnaryExpr{
@@ -882,7 +879,7 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 	case *Import:
 		c.markup(from.Before)
 		to = &ast.ImportSpec{
-			Name:   ident(c.expr(from.Name)),
+			Name:   c.expr(from.Name).(*ast.Ident),
 			Path:   c.expr(from.Path).(*ast.BasicLit),
 			EndPos: 0, // TODO: Verify this should be 0
 		}
@@ -974,8 +971,9 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Break:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
-			Tok:   token.BREAK,
-			Label: ident(c.expr(from.Label)),
+			TokPos: c.next(lenBreak),
+			Tok:    token.BREAK,
+			Label:  c.expr(from.Label).(*ast.Ident),
 		}
 		c.markup(from.After)
 	case *Case:
@@ -995,21 +993,24 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Continue:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
-			Tok:   token.CONTINUE,
-			Label: ident(c.expr(from.Label)),
+			TokPos: c.next(lenContinue),
+			Tok:    token.CONTINUE,
+			Label:  c.expr(from.Label).(*ast.Ident),
 		}
 		c.markup(from.After)
 	case *Dec:
 		c.markup(from.Before)
 		to = &ast.IncDecStmt{
-			X:   c.expr(from.X),
-			Tok: token.DEC,
+			X:      c.expr(from.X),
+			TokPos: c.next(lenDec),
+			Tok:    token.DEC,
 		}
 		c.markup(from.After)
 	case *Defer:
 		c.markup(from.Before)
 		to = &ast.DeferStmt{
-			Call: c.expr(from.Call).(*ast.CallExpr),
+			Defer: c.next(lenDefer),
+			Call:  c.expr(from.Call).(*ast.CallExpr),
 		}
 		c.markup(from.After)
 	case *Define:
@@ -1038,7 +1039,8 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Fallthrough:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
-			Tok: token.FALLTHROUGH,
+			TokPos: c.next(lenFallthrough),
+			Tok:    token.FALLTHROUGH,
 		}
 		c.markup(from.After)
 	case *For:
@@ -1053,14 +1055,16 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Go:
 		c.markup(from.Before)
 		to = &ast.GoStmt{
+			Go:   c.next(lenGo),
 			Call: c.expr(from.Call).(*ast.CallExpr),
 		}
 		c.markup(from.After)
 	case *Goto:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{
-			Tok:   token.GOTO,
-			Label: ident(c.expr(from.Label)),
+			TokPos: c.next(lenGoto),
+			Tok:    token.GOTO,
+			Label:  c.expr(from.Label).(*ast.Ident),
 		}
 		c.markup(from.After)
 	case *If:
@@ -1075,14 +1079,16 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Inc:
 		c.markup(from.Before)
 		to = &ast.IncDecStmt{
-			X:   c.expr(from.X),
-			Tok: token.INC,
+			X:      c.expr(from.X),
+			TokPos: c.next(lenInc),
+			Tok:    token.INC,
 		}
 		c.markup(from.After)
 	case *Label:
 		c.markup(from.Before)
 		to = &ast.LabeledStmt{
 			Label: c.expr(from.Label).(*ast.Ident),
+			Colon: c.next(lenColon),
 			Stmt:  c.stmt(from.Stmt),
 		}
 		c.markup(from.After)
@@ -1128,13 +1134,15 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	case *Return:
 		c.markup(from.Before)
 		to = &ast.ReturnStmt{
+			Return:  c.next(lenReturn),
 			Results: c.exprs(from.Results),
 		}
 		c.markup(from.After)
 	case *Select:
 		c.markup(from.Before)
 		to = &ast.SelectStmt{
-			Body: c.stmt(from.Body).(*ast.BlockStmt),
+			Select: c.next(lenSelect),
+			Body:   c.stmt(from.Body).(*ast.BlockStmt),
 		}
 		c.markup(from.After)
 	case *Send:
