@@ -19,24 +19,19 @@ func TestContext(t *testing.T) {
 func TestToString_expressions(t *testing.T) {
 	t.Parallel()
 	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
-	i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
 	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
 	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
 	for exp, str := range map[Expression]string{
-		&Add{X: z, Y: y}:                        "z + y",
-		&And{X: z, Y: y}:                        "z && y",
-		&AndNot{X: z, Y: y}:                     "z &^ y",
-		&Array{Length: &Ellipsis{}, Element: z}: "[...]z",
-		&Array{Element: z}:                      "[]z",
-		&Array{Length: i1, Element: z}:          "[1]z",
-		&Assert{X: z, Type: y}:                  "z.(y)",
-		&BitAnd{X: z, Y: y}:                     "z & y",
-		&BitOr{X: z, Y: y}:                      "z | y",
-		&Call{Fun: z}:                           "z()",
-		&Call{
-			Fun:  z,
-			Args: []Expression{y},
-		}: "z(y)",
+		&Add{X: z, Y: y}:                            "z + y",
+		&And{X: z, Y: y}:                            "z && y",
+		&AndNot{X: z, Y: y}:                         "z &^ y",
+		&Array{Length: &Ellipsis{}, Element: z}:     "[...]z",
+		&Array{Element: z}:                          "[]z",
+		&Array{Length: &Int{Text: "1"}, Element: z}: "[1]z",
+		&Assert{X: z, Type: y}:                      "z.(y)",
+		&BitAnd{X: z, Y: y}:                         "z & y",
+		&BitOr{X: z, Y: y}:                          "z | y",
+		&Call{Fun: z}:                               "z()",
 		&Call{
 			Fun: z,
 			Args: []Expression{
@@ -51,25 +46,18 @@ func TestToString_expressions(t *testing.T) {
 				&Ellipsis{Elem: &Name{Text: "x"}},
 			},
 		}: "z(y, x...)",
-		&Chan{Value: z}:                               "chan z",
-		&ChanIn{Value: z}:                             "<-chan z",
-		&ChanOut{Value: z}:                            "chan<- z",
-		&Composite{Type: z}:                           "z{}",
-		&Composite{Type: z, Elts: []Expression{y}}:    "z{y}",
+		&Chan{Value: z}:     "chan z",
+		&ChanIn{Value: z}:   "<-chan z",
+		&ChanOut{Value: z}:  "chan<- z",
+		&Composite{Type: z}: "z{}",
 		&Composite{Type: z, Elts: []Expression{y, x}}: "z{y, x}",
 		&Composite{
 			Type: z,
 			Elts: []Expression{
-				&KeyValue{Key: y, Value: i1},
+				&KeyValue{Key: y, Value: x},
+				&KeyValue{Key: w, Value: v},
 			},
-		}: "z{y: 1}",
-		&Composite{
-			Type: z,
-			Elts: []Expression{
-				&KeyValue{Key: y, Value: i1},
-				&KeyValue{Key: x, Value: i2},
-			},
-		}: "z{y: 1, x: 2}",
+		}: "z{y: x, w: v}",
 		&Deref{X: z}:        "*z",
 		&Divide{X: z, Y: y}: "z / y",
 		&Ellipsis{}:         "...",
@@ -78,60 +66,14 @@ func TestToString_expressions(t *testing.T) {
 		&Float{Text: "1.0"}: "1.0",
 		&Func{}:             "func()",
 		&Func{
-			Parameters: &FieldList{
-				List: []*Field{{Type: z}},
-			},
-		}: "func(z)",
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{{Type: z}, {Type: y}},
-			},
-		}: "func(z, y)",
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{
-					{Names: []*Name{z}, Type: y},
-				},
-			},
-		}: "func(z y)",
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{
-					{Names: []*Name{z}, Type: y},
-					{Names: []*Name{x}, Type: w},
-				},
-			},
-		}: "func(z y, x w)",
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{
-					{Names: []*Name{z, y}, Type: x},
-				},
-			},
-		}: "func(z, y x)",
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{
+			Params: &ParamList{
+				List: []*Param{
 					{Names: []*Name{z, y}, Type: x},
 					{Names: []*Name{w, v}, Type: u},
 				},
 			},
-		}: "func(z, y x, w, v u)",
-		&Func{
-			Results: &FieldList{
-				List: []*Field{{Type: z}},
-			},
-		}: "func() z",
-		// TODO: More Func tests
-		&Func{
-			Parameters: &FieldList{
-				List: []*Field{
-					{Names: []*Name{z, y}, Type: x},
-					{Names: []*Name{w, v}, Type: u},
-				},
-			},
-			Results: &FieldList{
-				List: []*Field{
+			Results: &ParamList{
+				List: []*Param{
 					{Names: []*Name{z, y}, Type: x},
 					{Names: []*Name{w, v}, Type: u},
 				},
@@ -252,14 +194,16 @@ func TestToString_expressions(t *testing.T) {
 					{
 						Names: []*Name{z, y},
 						Type:  x,
+						Tag:   &String{Text: "`tag1`"},
 					},
 					{
 						Names: []*Name{w, v},
 						Type:  u,
+						Tag:   &String{Text: "`tag2`"},
 					},
 				},
 			},
-		}: "struct {\n\tz\n\tz, y x\n\tw, v u\n}",
+		}: "struct {\n\tz\n\tz, y x `tag1`\n\tw, v u `tag2`\n}",
 		&Subtract{X: z, Y: y}: "z - y",
 		&Xor{X: z, Y: y}:      "z ^ y",
 	} {
@@ -299,12 +243,17 @@ func TestToString_expressions(t *testing.T) {
 
 func TestToString_statements(t *testing.T) {
 	t.Parallel()
-	_, _, _, _, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
-	//i1, i2 := &Int{Text: "1"}, &Int{Text: "2"}
+	_, _, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
 	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
 	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
 	for state, str := range map[Statement]string{
-		&AddAssign{Left: []Expression{z}, Right: []Expression{y}}: "z += y",
+		&AddAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:    "z, y += x, w",
+		&AndNotAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y &^= x, w",
+		&Assign{Left: []Expression{z, y}, Right: []Expression{x, w}}:       "z, y = x, w",
+		&BitAndAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y &= x, w",
+		&BitOrAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y |= x, w",
+		&Block{}: "{\n\t}",
+		&Block{List: []Statement{&Break{}, &Return{}}}: "{\n\t\tbreak\n\t\treturn\n\t}",
 	} {
 		func(state Statement, str string) {
 			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {

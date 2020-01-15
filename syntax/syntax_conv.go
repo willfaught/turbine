@@ -137,23 +137,25 @@ func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 		c.markup(from.After)
 		to = g
 	case *Func:
+		if from.Params == nil {
+			from.Params = &ParamList{}
+		}
 		c.markup(from.Before)
 		funcPos := c.next(lenFunc)
-		params := from.Parameters
-		if params == nil {
-			params = &FieldList{}
-		}
-		to = &ast.FuncDecl{
+		funcDecl := &ast.FuncDecl{
 			Recv: c.node(from.Receiver).(*ast.FieldList),
 			Name: c.expr(from.Name).(*ast.Ident),
 			Type: &ast.FuncType{
 				Func:    funcPos,
-				Params:  c.node(params).(*ast.FieldList),
-				Results: c.node(from.Results).(*ast.FieldList),
+				Params:  c.node(from.Params).(*ast.FieldList),
+				Results: c.results(from.Results),
 			},
-			Body: blockStmt(c.stmt(from.Body)),
+		}
+		if from.Body != nil {
+			funcDecl.Body = c.stmt(from.Body).(*ast.BlockStmt)
 		}
 		c.markup(from.After)
+		to = funcDecl
 	case *Import:
 		c.markup(from.Before)
 		to = &ast.GenDecl{
@@ -391,23 +393,20 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.markup(from.After)
 	case *Func:
+		if from.Params == nil {
+			from.Params = &ParamList{}
+		}
 		c.markup(from.Before)
-		f := &ast.FuncType{
+		funcType := &ast.FuncType{
 			Func:    c.next(lenFunc),
-			Params:  c.node(from.Parameters).(*ast.FieldList),
+			Params:  c.node(from.Params).(*ast.FieldList),
 			Results: c.node(from.Results).(*ast.FieldList),
 		}
-		if f.Params == nil {
-			f.Params = &ast.FieldList{
-				Opening: c.next(lenLparen),
-				Closing: c.next(lenRparen),
-			}
-		}
 		if from.Body == nil {
-			to = f
+			to = funcType
 		} else {
 			to = &ast.FuncLit{
-				Type: f,
+				Type: funcType,
 				Body: c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
@@ -456,6 +455,9 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.markup(from.After)
 	case *Interface:
+		if from.Methods == nil {
+			from.Methods = &MethodList{}
+		}
 		c.markup(from.Before)
 		to = &ast.InterfaceType{
 			Interface: c.next(lenInterface),
@@ -646,20 +648,16 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.markup(from.After)
 	case *Struct:
+		if from.Fields == nil {
+			from.Fields = &FieldList{}
+		}
 		c.markup(from.Before)
-		structType := &ast.StructType{
+		to = &ast.StructType{
 			Struct:     c.next(lenStruct),
 			Fields:     c.node(from.Fields).(*ast.FieldList),
 			Incomplete: false, // TODO: What is this for?
 		}
-		if structType.Fields == nil {
-			structType.Fields = &ast.FieldList{
-				Opening: c.next(lenLbrace),
-				Closing: c.next(lenRbrace),
-			}
-		}
 		c.markup(from.After)
-		to = structType
 	case *Subtract:
 		c.markup(from.Before)
 		to = &ast.BinaryExpr{
@@ -777,19 +775,16 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.After)
 		to = field
 	case *FieldList:
-		if from == nil {
-			to = (*ast.FieldList)(nil)
-		} else {
-			c.markup(from.Before)
-			fieldList := &ast.FieldList{}
-			fieldList.Opening = c.next(lenLbrace)
-			for _, f := range from.List {
-				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
-			}
-			fieldList.Closing = c.next(lenRbrace)
-			c.markup(from.After)
-			to = fieldList
+		// TODO: Refactor into helper for Field/Method/ParamList
+		c.markup(from.Before)
+		fieldList := &ast.FieldList{}
+		fieldList.Opening = c.next(lenLbrace)
+		for _, f := range from.List {
+			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 		}
+		fieldList.Closing = c.next(lenRbrace)
+		c.markup(from.After)
+		to = fieldList
 	case *File:
 		c.markup(from.Before)
 		c.astFile.Package = c.next(lenPackage)
@@ -798,6 +793,9 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.markup(from.After)
 		to = c.astFile
 	case *Method:
+		if from.Params == nil {
+			from.Params = &ParamList{}
+		}
 		c.markup(from.Before)
 		to = &ast.Field{
 			Names: []*ast.Ident{c.expr(from.Name).(*ast.Ident)},
@@ -808,22 +806,15 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		}
 		c.markup(from.After)
 	case *MethodList:
-		if from == nil {
-			to = &ast.FieldList{
-				Opening: c.next(lenLbrace),
-				Closing: c.next(lenRbrace),
-			}
-		} else {
-			c.markup(from.Before)
-			fieldList := &ast.FieldList{}
-			fieldList.Opening = c.next(lenLbrace)
-			for _, f := range from.List {
-				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
-			}
-			fieldList.Closing = c.next(lenRbrace)
-			c.markup(from.After)
-			to = fieldList
+		c.markup(from.Before)
+		fieldList := &ast.FieldList{}
+		fieldList.Opening = c.next(lenLbrace)
+		for _, f := range from.List {
+			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 		}
+		fieldList.Closing = c.next(lenRbrace)
+		c.markup(from.After)
+		to = fieldList
 	case *Param:
 		c.markup(from.Before)
 		to = &ast.Field{
@@ -832,7 +823,7 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		}
 		c.markup(from.After)
 	case *ParamList:
-		if from == nil {
+		if from == nil { // Func with no results
 			to = (*ast.FieldList)(nil)
 		} else {
 			c.markup(from.Before)
@@ -844,6 +835,25 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			fieldList.Closing = c.next(lenRparen)
 			c.markup(from.After)
 			to = fieldList
+		}
+	case *Receiver:
+		if from == nil { // Func with no receiver
+			to = (*ast.FieldList)(nil)
+		} else {
+			var names []*Name
+			if from.Name != nil {
+				names = []*Name{from.Name}
+			}
+			to = c.node(&ParamList{
+				Before: from.Before,
+				After:  from.After,
+				List: []*Param{
+					&Param{
+						Names: names,
+						Type:  from.Type,
+					},
+				},
+			})
 		}
 	default:
 		if d, ok := from.(Declaration); ok {
@@ -954,15 +964,13 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Block:
-		if from != nil {
-			c.markup(from.Before)
-			to = &ast.BlockStmt{
-				Lbrace: c.next(lenLbrace),
-				List:   c.stmts(from.List),
-				Rbrace: c.next(lenRbrace),
-			}
-			c.markup(from.After)
+		c.markup(from.Before)
+		to = &ast.BlockStmt{
+			Lbrace: c.next(lenLbrace),
+			List:   c.stmts(from.List),
+			Rbrace: c.next(lenRbrace),
 		}
+		c.markup(from.After)
 	case *Break:
 		c.markup(from.Before)
 		to = &ast.BranchStmt{

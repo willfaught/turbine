@@ -617,13 +617,13 @@ type For struct {
 }
 
 type Func struct {
-	Before     []Context
-	After      []Context
-	Receiver   *FieldList
-	Name       *Name
-	Parameters *FieldList
-	Results    *FieldList
-	Body       *Block
+	Before   []Context
+	After    []Context
+	Receiver *Receiver
+	Name     *Name
+	Params   *ParamList
+	Results  *ParamList
+	Body     *Block
 }
 
 type If struct {
