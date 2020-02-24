@@ -80,6 +80,8 @@ type Statement interface {
 	statement()
 }
 
+// TODO: Add exprs that can compile as statements
+
 func (*AddAssign) statement()        {}
 func (*AndNotAssign) statement()     {}
 func (*Assign) statement()           {}
@@ -87,6 +89,7 @@ func (*BitAndAssign) statement()     {}
 func (*BitOrAssign) statement()      {}
 func (*Block) statement()            {}
 func (*Break) statement()            {}
+func (*Call) statement()             {}
 func (*Case) statement()             {}
 func (*Continue) statement()         {}
 func (*Dec) statement()              {}
@@ -102,6 +105,7 @@ func (*Inc) statement()              {}
 func (*Label) statement()            {}
 func (*MultiplyAssign) statement()   {}
 func (*Range) statement()            {}
+func (*Receive) statement()          {}
 func (*RemainderAssign) statement()  {}
 func (*Return) statement()           {}
 func (*Select) statement()           {}
@@ -824,10 +828,10 @@ type Struct struct {
 type Switch struct {
 	Before []Context
 	After  []Context
-	Body   *Block
 	Init   Statement
 	Type   Statement
 	Value  Expression
+	Body   *Block
 }
 
 type Type struct {

@@ -243,7 +243,7 @@ func TestToString_expressions(t *testing.T) {
 
 func TestToString_statements(t *testing.T) {
 	t.Parallel()
-	_, _, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
+	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
 	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
 	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
 	for state, str := range map[Statement]string{
@@ -254,6 +254,117 @@ func TestToString_statements(t *testing.T) {
 		&BitOrAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y |= x, w",
 		&Block{}: "{\n\t}",
 		&Block{List: []Statement{&Break{}, &Return{}}}: "{\n\t\tbreak\n\t\treturn\n\t}",
+		&Break{}:                       "break",
+		&Break{Label: z}:               "break z",
+		&Case{}:                        "default:",
+		&Case{List: []Expression{z}}:   "case z:",
+		&Case{Comm: &Receive{X: z}}:    "case <-z:",
+		&Case{Comm: &Send{X: z, Y: y}}: "case z <- y:",
+		&Continue{}:                    "continue",
+		&Continue{Label: z}:            "continue z",
+		&Dec{X: z}:                     "z--",
+		&Defer{Call: &Call{Fun: z}}:    "defer z()",
+		&Define{Left: []Expression{z, y}, Right: []Expression{x, w}}:       "z, y := x, w",
+		&DivideAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y /= x, w",
+		&Fallthrough{}: "fallthrough",
+		&For{}:         "for {\n\t}",
+		&For{Body: &Block{List: []Statement{&Return{}}}}:          "for {\n\t\treturn\n\t}",
+		&For{Cond: z, Body: &Block{List: []Statement{&Return{}}}}: "for z {\n\t\treturn\n\t}",
+		&For{
+			Init: &Define{Left: []Expression{z}, Right: []Expression{y}},
+			Cond: x,
+			Post: &Inc{X: w},
+			Body: &Block{List: []Statement{&Return{}}},
+		}: "for z := y; x; w++ {\n\t\treturn\n\t}",
+		&Go{Call: &Call{Fun: z}}: "go z()",
+		&Goto{Label: z}:          "goto z",
+		&If{Cond: z}:             "if z {\n\t}",
+		&If{
+			Init: &Define{Left: []Expression{z}, Right: []Expression{y}},
+			Cond: x,
+			Body: &Block{List: []Statement{&Return{}}},
+		}: "if z := y; x {\n\t\treturn\n\t}",
+		&Inc{X: z}: "z++",
+		// TODO: Need separate test since labels are dedented one tab: &Label{Label: z, Stmt: &Inc{X: y}}: "z:\n\ty++",
+		&MultiplyAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y *= x, w",
+		&Range{
+			Key: z,
+			X:   y,
+		}: "for z := range y {\n\t}",
+		&Range{
+			Key:   z,
+			Value: y,
+			X:     x,
+			Body:  &Block{List: []Statement{&Return{}}},
+		}: "for z, y := range x {\n\t\treturn\n\t}",
+		&Receive{X: z}: "<-z",
+		&RemainderAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y %= x, w",
+		&Return{}:                            "return",
+		&Return{Results: []Expression{z, y}}: "return z, y",
+		&Select{}:                            "select {}",
+		&Select{
+			Body: &Block{
+				List: []Statement{
+					&Case{
+						Comm: &Receive{X: z},
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+					&Case{
+						Comm: &Send{X: y, Y: x},
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+					&Case{
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+				},
+			},
+		}: "select {\n\tcase <-z:\n\t\tbreak\n\t\tcontinue\n\tcase y <- x:\n\t\tbreak\n\t\tcontinue\n\tdefault:\n\t\tbreak\n\t\tcontinue\n\t}",
+		&Send{X: z, Y: y}: "z <- y",
+		&ShiftLeftAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y <<= x, w",
+		&ShiftRightAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y >>= x, w",
+		&SubtractAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:   "z, y -= x, w",
+		&Switch{}:         "switch {\n\t}",
+		&Switch{Value: z}: "switch z {\n\t}",
+		// &Switch{Type: z}:  "switch z.(type) {\n\t}",
+		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}}:           "switch z := y; {\n\t}",
+		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Value: x}: "switch z := y; x {\n\t}",
+		&Switch{
+			Init:  &Define{Left: []Expression{z}, Right: []Expression{y}},
+			Value: x,
+			Body: &Block{
+				List: []Statement{
+					&Case{
+						Comm: &Receive{X: w},
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+					&Case{
+						Comm: &Send{X: v, Y: u},
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+					&Case{
+						Body: []Statement{
+							&Break{},
+							&Continue{},
+						},
+					},
+				},
+			},
+		}: "switch z := y; x {\n\tcase <-w:\n\t\tbreak\n\t\tcontinue\n\tcase v <- u:\n\t\tbreak\n\t\tcontinue\n\tdefault:\n\t\tbreak\n\t\tcontinue\n\t}",
 	} {
 		func(state Statement, str string) {
 			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {
@@ -295,6 +406,25 @@ func TestToString_statements(t *testing.T) {
 }
 
 /*
+func parseFile(content string) *ast.File {
+	f, err := parser.ParseFile(token.NewFileSet(), "test.go", content, parser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func TestParse(t *testing.T) {
+	f := parseFile(`package p
+func f() {
+	switch z := y.(type) {
+	}
+}
+`)
+	pretty.Println(f)
+	t.FailNow()
+}
+
 func TestEmpty(t *testing.T) {
 	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
 	if err != nil {

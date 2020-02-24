@@ -20,6 +20,7 @@ var (
 	lenArrow        = len(token.ARROW.String())
 	lenAssign       = len(token.ASSIGN.String())
 	lenBreak        = len(token.BREAK.String())
+	lenCase         = len(token.CASE.String())
 	lenChan         = len(token.CHAN.String())
 	lenColon        = len(token.COLON.String())
 	lenContinue     = len(token.CONTINUE.String())
@@ -36,6 +37,7 @@ var (
 	lenGtr          = len(token.GTR.String())
 	lenGo           = len(token.GO.String())
 	lenGoto         = len(token.GOTO.String())
+	lenIf           = len(token.IF.String())
 	lenImport       = len(token.IMPORT.String())
 	lenInc          = len(token.INC.String())
 	lenInterface    = len(token.INTERFACE.String())
@@ -980,13 +982,17 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.Before)
 		if from.Comm == nil {
 			to = &ast.CaseClause{
-				Body: c.stmts(from.Body),
-				List: c.exprs(from.List),
+				Case:  c.next(lenCase),
+				List:  c.exprs(from.List),
+				Colon: c.next(lenColon),
+				Body:  c.stmts(from.Body),
 			}
 		} else {
 			to = &ast.CommClause{
-				Body: c.stmts(from.Body),
-				Comm: c.stmt(from.Comm),
+				Case:  c.next(lenCase),
+				Comm:  c.stmt(from.Comm),
+				Colon: c.next(lenColon),
+				Body:  c.stmts(from.Body),
 			}
 		}
 		c.markup(from.After)
@@ -1044,8 +1050,12 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *For:
+		if from.Body == nil {
+			from.Body = &Block{}
+		}
 		c.markup(from.Before)
 		to = &ast.ForStmt{
+			For:  c.next(lenFor),
 			Init: c.stmt(from.Init),
 			Cond: c.expr(from.Cond),
 			Post: c.stmt(from.Post),
@@ -1068,8 +1078,12 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *If:
+		if from.Body == nil {
+			from.Body = &Block{}
+		}
 		c.markup(from.Before)
 		to = &ast.IfStmt{
+			If:   c.next(lenIf),
 			Init: c.stmt(from.Init),
 			Cond: c.expr(from.Cond),
 			Body: c.stmt(from.Body).(*ast.BlockStmt),
@@ -1111,6 +1125,9 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 			t = token.DEFINE
 			l = lenDefine
 		}
+		if from.Body == nil {
+			from.Body = &Block{}
+		}
 		c.markup(from.Before)
 		to = &ast.RangeStmt{
 			For:    c.next(lenFor),
@@ -1139,6 +1156,9 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Select:
+		if from.Body == nil {
+			from.Body = &Block{}
+		}
 		c.markup(from.Before)
 		to = &ast.SelectStmt{
 			Select: c.next(lenSelect),
@@ -1181,24 +1201,23 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	case *Switch:
-		c.markup(from.Before)
-		body := from.Body
-		if body == nil {
-			body = &Block{}
+		if from.Body == nil {
+			from.Body = &Block{}
 		}
+		c.markup(from.Before)
 		if from.Type == nil {
 			to = &ast.SwitchStmt{
 				Switch: c.next(lenSwitch),
 				Init:   c.stmt(from.Init),
 				Tag:    c.expr(from.Value),
-				Body:   c.stmt(body).(*ast.BlockStmt),
+				Body:   c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		} else {
 			to = &ast.TypeSwitchStmt{
 				Switch: c.next(lenSwitch),
 				Init:   c.stmt(from.Init),
 				Assign: c.stmt(from.Type),
-				Body:   c.stmt(body).(*ast.BlockStmt),
+				Body:   c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
 		c.markup(from.After)
@@ -1212,7 +1231,13 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		}
 		c.markup(from.After)
 	default:
-		panic(fmt.Sprintf("invalid statement: %#v", from))
+		if d, ok := from.(Declaration); ok {
+			to = &ast.DeclStmt{Decl: c.decl(d)} // TODO: What happens if the declaration is an import?
+		} else if e, ok := from.(Expression); ok {
+			to = &ast.ExprStmt{X: c.expr(e)} // TODO: What happens if the expression is an integer?
+		} else {
+			panic(fmt.Sprintf("invalid statement: %#v", from))
+		}
 	}
 	return to
 }
