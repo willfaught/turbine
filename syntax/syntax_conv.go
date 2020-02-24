@@ -1232,9 +1232,9 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 		c.markup(from.After)
 	default:
 		if d, ok := from.(Declaration); ok {
-			to = &ast.DeclStmt{Decl: c.decl(d)} // TODO: What happens if the declaration is an import?
+			to = &ast.DeclStmt{Decl: c.decl(d)}
 		} else if e, ok := from.(Expression); ok {
-			to = &ast.ExprStmt{X: c.expr(e)} // TODO: What happens if the expression is an integer?
+			to = &ast.ExprStmt{X: c.expr(e)}
 		} else {
 			panic(fmt.Sprintf("invalid statement: %#v", from))
 		}
