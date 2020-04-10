@@ -28,6 +28,7 @@ func TestToString_expressions(t *testing.T) {
 		&Array{Length: &Ellipsis{}, Element: z}:     "[...]z",
 		&Array{Element: z}:                          "[]z",
 		&Array{Length: &Int{Text: "1"}, Element: z}: "[1]z",
+		&Assert{X: z}:                               "z.(type)",
 		&Assert{X: z, Type: y}:                      "z.(y)",
 		&BitAnd{X: z, Y: y}:                         "z & y",
 		&BitOr{X: z, Y: y}:                          "z | y",
@@ -332,11 +333,13 @@ func TestToString_statements(t *testing.T) {
 		&ShiftLeftAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y <<= x, w",
 		&ShiftRightAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y >>= x, w",
 		&SubtractAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:   "z, y -= x, w",
-		&Switch{}:         "switch {\n\t}",
+		&Switch{}: "switch {\n\t}",
+		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}}: "switch z := y; {\n\t}",
 		&Switch{Value: z}: "switch z {\n\t}",
-		// &Switch{Type: z}:  "switch z.(type) {\n\t}",
-		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}}:           "switch z := y; {\n\t}",
 		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Value: x}: "switch z := y; x {\n\t}",
+		&Switch{Type: &Assert{X: z}}: "switch z.(type) {\n\t}",
+		&Switch{Type: &Define{Left: []Expression{z}, Right: []Expression{&Assert{X: y}}}}:                                                               "switch z := y.(type) {\n\t}",
+		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Type: &Define{Left: []Expression{x}, Right: []Expression{&Assert{X: w}}}}: "switch z := y; x := w.(type) {\n\t}",
 		&Switch{
 			Init:  &Define{Left: []Expression{z}, Right: []Expression{y}},
 			Value: x,
@@ -346,25 +349,22 @@ func TestToString_statements(t *testing.T) {
 						Comm: &Receive{X: w},
 						Body: []Statement{
 							&Break{},
-							&Continue{},
 						},
 					},
 					&Case{
 						Comm: &Send{X: v, Y: u},
 						Body: []Statement{
 							&Break{},
-							&Continue{},
 						},
 					},
 					&Case{
 						Body: []Statement{
 							&Break{},
-							&Continue{},
 						},
 					},
 				},
 			},
-		}: "switch z := y; x {\n\tcase <-w:\n\t\tbreak\n\t\tcontinue\n\tcase v <- u:\n\t\tbreak\n\t\tcontinue\n\tdefault:\n\t\tbreak\n\t\tcontinue\n\t}",
+		}: "switch z := y; x {\n\tcase <-w:\n\t\tbreak\n\tcase v <- u:\n\t\tbreak\n\tdefault:\n\t\tbreak\n\t}",
 	} {
 		func(state Statement, str string) {
 			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {
@@ -417,13 +417,14 @@ func parseFile(content string) *ast.File {
 func TestParse(t *testing.T) {
 	f := parseFile(`package p
 func f() {
-	switch z := y.(type) {
+	switch a, b := c, d; y.(type) {
 	}
 }
 `)
 	pretty.Println(f)
 	t.FailNow()
 }
+
 
 func TestEmpty(t *testing.T) {
 	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")

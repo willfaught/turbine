@@ -84,6 +84,7 @@ type Statement interface {
 
 func (*AddAssign) statement()        {}
 func (*AndNotAssign) statement()     {}
+func (*Assert) statement()           {}
 func (*Assign) statement()           {}
 func (*BitAndAssign) statement()     {}
 func (*BitOrAssign) statement()      {}
@@ -829,8 +830,8 @@ type Switch struct {
 	Before []Context
 	After  []Context
 	Init   Statement
-	Type   Statement
 	Value  Expression
+	Type   Statement
 	Body   *Block
 }
 
