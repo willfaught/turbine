@@ -1137,16 +1137,21 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 			from.Body = &Block{}
 		}
 		c.gaps(from.Before)
-		to = &ast.RangeStmt{
-			For:    c.add(lenFor),
-			Key:    c.expr(from.Key),
-			Value:  c.expr(from.Value),
-			TokPos: c.add(l), // TODO: Should not set if Key==nil
-			Tok:    t,
-			X:      c.expr(from.Container),
-			Body:   c.stmt(from.Body).(*ast.BlockStmt),
+		rangeStmt := &ast.RangeStmt{
+			For: c.add(lenFor),
 		}
+		if from.Key != nil {
+			rangeStmt.Key = c.expr(from.Key)
+			if from.Value != nil {
+				rangeStmt.Value = c.expr(from.Value)
+			}
+			rangeStmt.TokPos = c.add(l)
+			rangeStmt.Tok = t
+		}
+		rangeStmt.X = c.expr(from.Container)
+		rangeStmt.Body = c.stmt(from.Body).(*ast.BlockStmt)
 		c.gaps(from.After)
+		to = rangeStmt
 	case *RemainderAssign:
 		c.gaps(from.Before)
 		to = &ast.AssignStmt{
