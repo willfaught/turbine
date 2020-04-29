@@ -4,230 +4,230 @@ package syntax
 
 type Declaration interface {
 	Syntax
-	declaration()
+	Declaration()
 }
 
-func (*Const) declaration()      {}
-func (*ConstList) declaration()  {}
-func (*Func) declaration()       {}
-func (*Import) declaration()     {}
-func (*ImportList) declaration() {}
-func (*Type) declaration()       {}
-func (*TypeList) declaration()   {}
-func (*Var) declaration()        {}
-func (*VarList) declaration()    {}
+func (*Const) Declaration()      {}
+func (*ConstList) Declaration()  {}
+func (*Func) Declaration()       {}
+func (*Import) Declaration()     {}
+func (*ImportList) Declaration() {}
+func (*Type) Declaration()       {}
+func (*TypeList) Declaration()   {}
+func (*Var) Declaration()        {}
+func (*VarList) Declaration()    {}
 
 // Expressions
 
 type Expression interface {
 	Syntax
-	expression()
+	Expression()
 }
 
-func (*Add) expression()          {}
-func (*And) expression()          {}
-func (*AndNot) expression()       {}
-func (*Array) expression()        {}
-func (*Assert) expression()       {}
-func (*BitAnd) expression()       {}
-func (*BitOr) expression()        {}
-func (*Call) expression()         {}
-func (*Chan) expression()         {}
-func (*ChanIn) expression()       {}
-func (*ChanOut) expression()      {}
-func (*Composite) expression()    {}
-func (*Deref) expression()        {}
-func (*Divide) expression()       {}
-func (*Ellipsis) expression()     {}
-func (*Equal) expression()        {}
-func (*Float) expression()        {}
-func (*Func) expression()         {}
-func (*Greater) expression()      {}
-func (*GreaterEqual) expression() {}
-func (*Imag) expression()         {}
-func (*Index) expression()        {}
-func (*Int) expression()          {}
-func (*Interface) expression()    {}
-func (*KeyValue) expression()     {}
-func (*Less) expression()         {}
-func (*LessEqual) expression()    {}
-func (*Map) expression()          {}
-func (*Multiply) expression()     {}
-func (*Name) expression()         {}
-func (*Negate) expression()       {}
-func (*Not) expression()          {}
-func (*NotEqual) expression()     {}
-func (*Or) expression()           {}
-func (*Paren) expression()        {}
-func (*Pointer) expression()      {}
-func (*Receive) expression()      {}
-func (*Ref) expression()          {}
-func (*Remainder) expression()    {}
-func (*Rune) expression()         {}
-func (*Selector) expression()     {}
-func (*ShiftLeft) expression()    {}
-func (*ShiftRight) expression()   {}
-func (*Slice) expression()        {}
-func (*String) expression()       {}
-func (*Struct) expression()       {}
-func (*Subtract) expression()     {}
-func (*Xor) expression()          {}
+func (*Add) Expression()          {}
+func (*And) Expression()          {}
+func (*AndNot) Expression()       {}
+func (*Array) Expression()        {}
+func (*Assert) Expression()       {}
+func (*BitAnd) Expression()       {}
+func (*BitOr) Expression()        {}
+func (*Call) Expression()         {}
+func (*Chan) Expression()         {}
+func (*ChanIn) Expression()       {}
+func (*ChanOut) Expression()      {}
+func (*Composite) Expression()    {}
+func (*Deref) Expression()        {}
+func (*Divide) Expression()       {}
+func (*Ellipsis) Expression()     {}
+func (*Equal) Expression()        {}
+func (*Float) Expression()        {}
+func (*Func) Expression()         {}
+func (*Greater) Expression()      {}
+func (*GreaterEqual) Expression() {}
+func (*Imag) Expression()         {}
+func (*Index) Expression()        {}
+func (*Int) Expression()          {}
+func (*Interface) Expression()    {}
+func (*KeyValue) Expression()     {}
+func (*Less) Expression()         {}
+func (*LessEqual) Expression()    {}
+func (*Map) Expression()          {}
+func (*Multiply) Expression()     {}
+func (*Name) Expression()         {}
+func (*Negate) Expression()       {}
+func (*Not) Expression()          {}
+func (*NotEqual) Expression()     {}
+func (*Or) Expression()           {}
+func (*Paren) Expression()        {}
+func (*Pointer) Expression()      {}
+func (*Receive) Expression()      {}
+func (*Ref) Expression()          {}
+func (*Remainder) Expression()    {}
+func (*Rune) Expression()         {}
+func (*Selector) Expression()     {}
+func (*ShiftLeft) Expression()    {}
+func (*ShiftRight) Expression()   {}
+func (*Slice) Expression()        {}
+func (*String) Expression()       {}
+func (*Struct) Expression()       {}
+func (*Subtract) Expression()     {}
+func (*Xor) Expression()          {}
 
 // Statements
 
 type Statement interface {
 	Syntax
-	statement()
+	Statement()
 }
 
 // TODO: Add exprs that can compile as statements
 
-func (*AddAssign) statement()        {}
-func (*AndNotAssign) statement()     {}
-func (*Assert) statement()           {}
-func (*Assign) statement()           {}
-func (*BitAndAssign) statement()     {}
-func (*BitOrAssign) statement()      {}
-func (*Block) statement()            {}
-func (*Break) statement()            {}
-func (*Call) statement()             {}
-func (*Case) statement()             {}
-func (*Continue) statement()         {}
-func (*Dec) statement()              {}
-func (*Defer) statement()            {}
-func (*Define) statement()           {}
-func (*DivideAssign) statement()     {}
-func (*Fallthrough) statement()      {}
-func (*For) statement()              {}
-func (*Go) statement()               {}
-func (*Goto) statement()             {}
-func (*If) statement()               {}
-func (*Inc) statement()              {}
-func (*Label) statement()            {}
-func (*MultiplyAssign) statement()   {}
-func (*Range) statement()            {}
-func (*Receive) statement()          {}
-func (*RemainderAssign) statement()  {}
-func (*Return) statement()           {}
-func (*Select) statement()           {}
-func (*Send) statement()             {}
-func (*ShiftLeftAssign) statement()  {}
-func (*ShiftRightAssign) statement() {}
-func (*SubtractAssign) statement()   {}
-func (*Switch) statement()           {}
-func (*XorAssign) statement()        {}
+func (*AddAssign) Statement()        {}
+func (*AndNotAssign) Statement()     {}
+func (*Assert) Statement()           {}
+func (*Assign) Statement()           {}
+func (*BitAndAssign) Statement()     {}
+func (*BitOrAssign) Statement()      {}
+func (*Block) Statement()            {}
+func (*Break) Statement()            {}
+func (*Call) Statement()             {}
+func (*Case) Statement()             {}
+func (*Continue) Statement()         {}
+func (*Dec) Statement()              {}
+func (*Defer) Statement()            {}
+func (*Define) Statement()           {}
+func (*DivideAssign) Statement()     {}
+func (*Fallthrough) Statement()      {}
+func (*For) Statement()              {}
+func (*Go) Statement()               {}
+func (*Goto) Statement()             {}
+func (*If) Statement()               {}
+func (*Inc) Statement()              {}
+func (*Label) Statement()            {}
+func (*MultiplyAssign) Statement()   {}
+func (*Range) Statement()            {}
+func (*Receive) Statement()          {}
+func (*RemainderAssign) Statement()  {}
+func (*Return) Statement()           {}
+func (*Select) Statement()           {}
+func (*Send) Statement()             {}
+func (*ShiftLeftAssign) Statement()  {}
+func (*ShiftRightAssign) Statement() {}
+func (*SubtractAssign) Statement()   {}
+func (*Switch) Statement()           {}
+func (*XorAssign) Statement()        {}
 
 // Syntax
 
 type Syntax interface {
-	syntax()
+	Syntax()
 }
 
-func (*Add) syntax()              {}
-func (*AddAssign) syntax()        {}
-func (*And) syntax()              {}
-func (*AndNot) syntax()           {}
-func (*AndNotAssign) syntax()     {}
-func (*Array) syntax()            {}
-func (*Assert) syntax()           {}
-func (*Assign) syntax()           {}
-func (*BitAnd) syntax()           {}
-func (*BitAndAssign) syntax()     {}
-func (*BitOr) syntax()            {}
-func (*BitOrAssign) syntax()      {}
-func (*Block) syntax()            {}
-func (*Break) syntax()            {}
-func (*Call) syntax()             {}
-func (*Case) syntax()             {}
-func (*Chan) syntax()             {}
-func (*ChanIn) syntax()           {}
-func (*ChanOut) syntax()          {}
-func (*Composite) syntax()        {}
-func (*Const) syntax()            {}
-func (*ConstList) syntax()        {}
-func (*Continue) syntax()         {}
-func (*Dec) syntax()              {}
-func (*Defer) syntax()            {}
-func (*Define) syntax()           {}
-func (*Deref) syntax()            {}
-func (*Divide) syntax()           {}
-func (*DivideAssign) syntax()     {}
-func (*Ellipsis) syntax()         {}
-func (*Equal) syntax()            {}
-func (*Fallthrough) syntax()      {}
-func (*Field) syntax()            {}
-func (*FieldList) syntax()        {}
-func (*File) syntax()             {}
-func (*Float) syntax()            {}
-func (*For) syntax()              {}
-func (*Func) syntax()             {}
-func (*Go) syntax()               {}
-func (*Goto) syntax()             {}
-func (*Greater) syntax()          {}
-func (*GreaterEqual) syntax()     {}
-func (*If) syntax()               {}
-func (*Imag) syntax()             {}
-func (*Import) syntax()           {}
-func (*ImportList) syntax()       {}
-func (*Inc) syntax()              {}
-func (*Index) syntax()            {}
-func (*Int) syntax()              {}
-func (*Interface) syntax()        {}
-func (*KeyValue) syntax()         {}
-func (*Label) syntax()            {}
-func (*Less) syntax()             {}
-func (*LessEqual) syntax()        {}
-func (*Map) syntax()              {}
-func (*Method) syntax()           {}
-func (*MethodList) syntax()       {}
-func (*Multiply) syntax()         {}
-func (*MultiplyAssign) syntax()   {}
-func (*Name) syntax()             {}
-func (*Negate) syntax()           {}
-func (*Not) syntax()              {}
-func (*NotEqual) syntax()         {}
-func (*Or) syntax()               {}
-func (*Param) syntax()            {}
-func (*ParamList) syntax()        {}
-func (*Paren) syntax()            {}
-func (*Pointer) syntax()          {}
-func (*Range) syntax()            {}
-func (*Receive) syntax()          {}
-func (*Receiver) syntax()         {}
-func (*Ref) syntax()              {}
-func (*Remainder) syntax()        {}
-func (*RemainderAssign) syntax()  {}
-func (*Return) syntax()           {}
-func (*Rune) syntax()             {}
-func (*Select) syntax()           {}
-func (*Selector) syntax()         {}
-func (*Send) syntax()             {}
-func (*ShiftLeft) syntax()        {}
-func (*ShiftLeftAssign) syntax()  {}
-func (*ShiftRight) syntax()       {}
-func (*ShiftRightAssign) syntax() {}
-func (*Slice) syntax()            {}
-func (*String) syntax()           {}
-func (*Struct) syntax()           {}
-func (*Subtract) syntax()         {}
-func (*SubtractAssign) syntax()   {}
-func (*Switch) syntax()           {}
-func (*Type) syntax()             {}
-func (*TypeList) syntax()         {}
-func (*Var) syntax()              {}
-func (*VarList) syntax()          {}
-func (*Xor) syntax()              {}
-func (*XorAssign) syntax()        {}
+func (*Add) Syntax()              {}
+func (*AddAssign) Syntax()        {}
+func (*And) Syntax()              {}
+func (*AndNot) Syntax()           {}
+func (*AndNotAssign) Syntax()     {}
+func (*Array) Syntax()            {}
+func (*Assert) Syntax()           {}
+func (*Assign) Syntax()           {}
+func (*BitAnd) Syntax()           {}
+func (*BitAndAssign) Syntax()     {}
+func (*BitOr) Syntax()            {}
+func (*BitOrAssign) Syntax()      {}
+func (*Block) Syntax()            {}
+func (*Break) Syntax()            {}
+func (*Call) Syntax()             {}
+func (*Case) Syntax()             {}
+func (*Chan) Syntax()             {}
+func (*ChanIn) Syntax()           {}
+func (*ChanOut) Syntax()          {}
+func (*Composite) Syntax()        {}
+func (*Const) Syntax()            {}
+func (*ConstList) Syntax()        {}
+func (*Continue) Syntax()         {}
+func (*Dec) Syntax()              {}
+func (*Defer) Syntax()            {}
+func (*Define) Syntax()           {}
+func (*Deref) Syntax()            {}
+func (*Divide) Syntax()           {}
+func (*DivideAssign) Syntax()     {}
+func (*Ellipsis) Syntax()         {}
+func (*Equal) Syntax()            {}
+func (*Fallthrough) Syntax()      {}
+func (*Field) Syntax()            {}
+func (*FieldList) Syntax()        {}
+func (*File) Syntax()             {}
+func (*Float) Syntax()            {}
+func (*For) Syntax()              {}
+func (*Func) Syntax()             {}
+func (*Go) Syntax()               {}
+func (*Goto) Syntax()             {}
+func (*Greater) Syntax()          {}
+func (*GreaterEqual) Syntax()     {}
+func (*If) Syntax()               {}
+func (*Imag) Syntax()             {}
+func (*Import) Syntax()           {}
+func (*ImportList) Syntax()       {}
+func (*Inc) Syntax()              {}
+func (*Index) Syntax()            {}
+func (*Int) Syntax()              {}
+func (*Interface) Syntax()        {}
+func (*KeyValue) Syntax()         {}
+func (*Label) Syntax()            {}
+func (*Less) Syntax()             {}
+func (*LessEqual) Syntax()        {}
+func (*Map) Syntax()              {}
+func (*Method) Syntax()           {}
+func (*MethodList) Syntax()       {}
+func (*Multiply) Syntax()         {}
+func (*MultiplyAssign) Syntax()   {}
+func (*Name) Syntax()             {}
+func (*Negate) Syntax()           {}
+func (*Not) Syntax()              {}
+func (*NotEqual) Syntax()         {}
+func (*Or) Syntax()               {}
+func (*Param) Syntax()            {}
+func (*ParamList) Syntax()        {}
+func (*Paren) Syntax()            {}
+func (*Pointer) Syntax()          {}
+func (*Range) Syntax()            {}
+func (*Receive) Syntax()          {}
+func (*Receiver) Syntax()         {}
+func (*Ref) Syntax()              {}
+func (*Remainder) Syntax()        {}
+func (*RemainderAssign) Syntax()  {}
+func (*Return) Syntax()           {}
+func (*Rune) Syntax()             {}
+func (*Select) Syntax()           {}
+func (*Selector) Syntax()         {}
+func (*Send) Syntax()             {}
+func (*ShiftLeft) Syntax()        {}
+func (*ShiftLeftAssign) Syntax()  {}
+func (*ShiftRight) Syntax()       {}
+func (*ShiftRightAssign) Syntax() {}
+func (*Slice) Syntax()            {}
+func (*String) Syntax()           {}
+func (*Struct) Syntax()           {}
+func (*Subtract) Syntax()         {}
+func (*SubtractAssign) Syntax()   {}
+func (*Switch) Syntax()           {}
+func (*Type) Syntax()             {}
+func (*TypeList) Syntax()         {}
+func (*Var) Syntax()              {}
+func (*VarList) Syntax()          {}
+func (*Xor) Syntax()              {}
+func (*XorAssign) Syntax()        {}
 
 // Context
 
 type Context interface {
-	context()
+	Context()
 }
 
-func (*Comment) context() {}
-func (*Line) context()    {}
-func (*Space) context()   {}
+func (*Comment) Context() {}
+func (*Line) Context()    {}
+func (*Space) Context()   {}
 
 type Array struct {
 	Before  []Context
@@ -523,6 +523,7 @@ type Comment struct {
 	Text string
 }
 
+// TODO
 // type CommentGroup struct {
 // 	List []*Comment
 // }
