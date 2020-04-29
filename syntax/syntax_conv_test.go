@@ -339,7 +339,10 @@ func TestToString_statements(t *testing.T) {
 		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Value: x}: "switch z := y; x {\n\t}",
 		&Switch{Type: &Assert{X: z}}: "switch z.(type) {\n\t}",
 		&Switch{Type: &Define{Left: []Expression{z}, Right: []Expression{&Assert{X: y}}}}:                                                               "switch z := y.(type) {\n\t}",
-		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Type: &Define{Left: []Expression{x}, Right: []Expression{&Assert{X: w}}}}: "switch z := y; x := w.(type) {\n\t}",
+		&Switch{
+			Init: &Define{Left: []Expression{z}, Right: []Expression{y}},
+			Type: &Define{Left: []Expression{x}, Right: []Expression{&Assert{X: w}}},
+		}: "switch z := y; x := w.(type) {\n\t}",
 		&Switch{
 			Init:  &Define{Left: []Expression{z}, Right: []Expression{y}},
 			Value: x,
@@ -365,6 +368,7 @@ func TestToString_statements(t *testing.T) {
 				},
 			},
 		}: "switch z := y; x {\n\tcase <-w:\n\t\tbreak\n\tcase v <- u:\n\t\tbreak\n\tdefault:\n\t\tbreak\n\t}",
+		&XorAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y ^= x, w",
 	} {
 		func(state Statement, str string) {
 			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {
