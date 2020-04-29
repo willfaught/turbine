@@ -409,9 +409,11 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.gaps(from.Before)
 		funcType := &ast.FuncType{
-			Func:    c.add(lenFunc),
-			Params:  c.node(from.Params).(*ast.FieldList),
-			Results: c.node(from.Results).(*ast.FieldList),
+			Func:   c.add(lenFunc),
+			Params: c.node(from.Params).(*ast.FieldList),
+		}
+		if from.Results != nil {
+			funcType.Results = c.node(from.Results).(*ast.FieldList)
 		}
 		if from.Body == nil {
 			to = funcType
@@ -801,16 +803,18 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 			from.Params = &ParamList{}
 		}
 		c.gaps(from.Before)
-		to = &ast.Field{
+		field := &ast.Field{
 			Names: []*ast.Ident{c.expr(from.Name).(*ast.Ident)},
-			Type: &ast.FuncType{
-				Params: c.node(from.Params).(*ast.FieldList),
-			},
 		}
+		funcType := &ast.FuncType{
+			Params: c.node(from.Params).(*ast.FieldList),
+		}
+		field.Type = funcType
 		if from.Results != nil {
-			to.Type.Results = c.results(from.Results)
+			funcType.Results = c.results(from.Results)
 		}
 		c.gaps(from.After)
+		to = field
 	case *MethodList:
 		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
