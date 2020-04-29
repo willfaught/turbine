@@ -149,13 +149,14 @@ func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 		}
 		c.gaps(from.Before)
 		funcPos := c.add(lenFunc)
-		funcDecl := &ast.FuncDecl{
-			Recv: c.node(from.Receiver).(*ast.FieldList),
-			Name: c.expr(from.Name).(*ast.Ident),
-			Type: &ast.FuncType{
-				Func:   funcPos,
-				Params: c.node(from.Params).(*ast.FieldList),
-			},
+		funcDecl := &ast.FuncDecl{}
+		if from.Receiver != nil {
+			funcDecl.Recv = c.node(from.Receiver).(*ast.FieldList)
+		}
+		funcDecl.Name = c.expr(from.Name).(*ast.Ident)
+		funcDecl.Type = &ast.FuncType{
+			Func:   funcPos,
+			Params: c.node(from.Params).(*ast.FieldList),
 		}
 		if from.Results != nil {
 			funcDecl.Type.Results = c.results(from.Results)
@@ -838,26 +839,22 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.gaps(from.After)
 		to = fieldList
 	case *Receiver:
-		if from == nil { // Func with no receiver
-			to = (*ast.FieldList)(nil)
-		} else {
-			var names []*Name
-			if from.Name != nil {
-				names = []*Name{from.Name}
-			}
-			to = c.node(&ParamList{
-				Context: Context{
-					Before: from.Before,
-					After:  from.After,
-				},
-				List: []*Param{
-					&Param{
-						Names: names,
-						Type:  from.Type,
-					},
-				},
-			})
+		var names []*Name
+		if from.Name != nil {
+			names = []*Name{from.Name}
 		}
+		to = c.node(&ParamList{
+			Context: Context{
+				Before: from.Before,
+				After:  from.After,
+			},
+			List: []*Param{
+				&Param{
+					Names: names,
+					Type:  from.Type,
+				},
+			},
+		})
 	default:
 		if d, ok := from.(Declaration); ok {
 			to = c.decl(d)
