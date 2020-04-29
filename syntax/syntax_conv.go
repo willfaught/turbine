@@ -779,7 +779,6 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.gaps(from.After)
 		to = field
 	case *FieldList:
-		// TODO: Refactor into helper for Field/Method/ParamList
 		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
 		fieldList.Opening = c.add(lenLbrace)
@@ -829,19 +828,15 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		}
 		c.gaps(from.After)
 	case *ParamList:
-		if from == nil { // Func with no results
-			to = (*ast.FieldList)(nil)
-		} else {
-			c.gaps(from.Before)
-			fieldList := &ast.FieldList{}
-			fieldList.Opening = c.add(lenLparen)
-			for _, f := range from.List {
-				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
-			}
-			fieldList.Closing = c.add(lenRparen)
-			c.gaps(from.After)
-			to = fieldList
+		c.gaps(from.Before)
+		fieldList := &ast.FieldList{}
+		fieldList.Opening = c.add(lenLparen)
+		for _, f := range from.List {
+			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 		}
+		fieldList.Closing = c.add(lenRparen)
+		c.gaps(from.After)
+		to = fieldList
 	case *Receiver:
 		if from == nil { // Func with no receiver
 			to = (*ast.FieldList)(nil)
