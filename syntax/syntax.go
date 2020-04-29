@@ -241,8 +241,8 @@ type Context struct {
 
 type Add struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type AddAssign struct {
@@ -253,14 +253,14 @@ type AddAssign struct {
 
 type And struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type AndNot struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Array struct {
@@ -271,8 +271,8 @@ type Array struct {
 
 type Assert struct {
 	Context
-	X    Expression
-	Type Expression
+	Value Expression
+	Type  Expression
 }
 
 type Assign struct {
@@ -283,14 +283,14 @@ type Assign struct {
 
 type BitAnd struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type BitOr struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Define struct {
@@ -301,92 +301,92 @@ type Define struct {
 
 type Divide struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Equal struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Greater struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type GreaterEqual struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Less struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type LessEqual struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Multiply struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type NotEqual struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Or struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Remainder struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Send struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type ShiftLeft struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type ShiftRight struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Subtract struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type Xor struct {
 	Context
-	X Expression
-	Y Expression
+	Left  Expression
+	Right Expression
 }
 
 type SubtractAssign struct {
@@ -522,7 +522,7 @@ type Continue struct {
 
 type Dec struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Defer struct {
@@ -532,7 +532,7 @@ type Defer struct {
 
 type Deref struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Ellipsis struct {
@@ -628,13 +628,13 @@ type ImportList struct {
 
 type Inc struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Index struct {
 	Context
-	X     Expression
-	Index Expression
+	Container Expression
+	Param     Expression
 }
 
 type Int struct {
@@ -688,12 +688,12 @@ type Name struct {
 
 type Negate struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Not struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Param struct {
@@ -709,12 +709,12 @@ type ParamList struct {
 
 type Paren struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Pointer struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Receiver struct {
@@ -725,21 +725,21 @@ type Receiver struct {
 
 type Range struct {
 	Context
-	Assign bool
-	Key    Expression
-	Value  Expression
-	X      Expression
-	Body   *Block
+	Assign    bool
+	Key       Expression
+	Value     Expression
+	Container Expression
+	Body      *Block
 }
 
 type Receive struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Ref struct {
 	Context
-	X Expression
+	Left Expression
 }
 
 type Return struct {
@@ -759,16 +759,16 @@ type Select struct {
 
 type Selector struct {
 	Context
-	X   Expression
-	Sel *Name
+	Value Expression
+	Name  *Name
 }
 
 type Slice struct {
 	Context
-	X    Expression
-	Low  Expression
-	High Expression
-	Max  Expression
+	Slice Expression
+	Low   Expression
+	High  Expression
+	Max   Expression
 }
 
 type Space struct {
