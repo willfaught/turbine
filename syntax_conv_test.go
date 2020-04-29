@@ -1,4 +1,4 @@
-package syntax
+package turbine
 
 import (
 	"go/ast"
