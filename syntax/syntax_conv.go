@@ -1,13 +1,12 @@
 package syntax
 
-// TODO: Rename Space to Offset or Gap, since it can be for delimiters like {a, b, c}?
-
 import (
 	"bytes"
 	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
+	"strings"
 )
 
 var (
@@ -83,7 +82,7 @@ var (
 )
 
 func ToNode(s Syntax) (*token.FileSet, ast.Node) {
-	c := newSyntaxConverter()
+	c := newSyntaxConv()
 	return c.tokenFileSet, c.node(s)
 }
 
@@ -96,31 +95,34 @@ func ToString(s Syntax) (string, error) {
 	return b.String(), nil
 }
 
-type syntaxConverter struct {
+type syntaxConv struct {
 	astFile      *ast.File
+	eol          bool
 	last         token.Pos
-	newLineEmpty bool // new line added but nothing added to it yet. TODO: check if true at end and remove last line from token file if true.
 	tokenFile    *token.File
 	tokenFileSet *token.FileSet
 }
 
-func newSyntaxConverter() *syntaxConverter {
+func newSyntaxConv() *syntaxConv {
 	fset := token.NewFileSet()
-	return &syntaxConverter{
+	return &syntaxConv{
 		astFile:      &ast.File{},
 		tokenFile:    fset.AddFile("", -1, int((^uint(0))>>1)),
 		tokenFileSet: fset,
 	}
 }
 
-func (c *syntaxConverter) add(n int) token.Pos {
-	var p = c.last + 1
+func (c *syntaxConv) add(n int) token.Pos {
+	p := c.last + 1
 	c.last += token.Pos(n)
-	c.newLineEmpty = false
+	if c.eol {
+		c.tokenFile.AddLine(c.tokenFile.Offset(p))
+		c.eol = false
+	}
 	return p
 }
 
-func (c *syntaxConverter) decl(from Declaration) (to ast.Decl) {
+func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 	switch from := from.(type) {
 	case *Const:
 		c.gaps(from.Before)
@@ -222,7 +224,7 @@ func (c *syntaxConverter) decl(from Declaration) (to ast.Decl) {
 	return to
 }
 
-func (c *syntaxConverter) decls(from []Declaration) (to []ast.Decl) {
+func (c *syntaxConv) decls(from []Declaration) (to []ast.Decl) {
 	to = make([]ast.Decl, len(from))
 	for i, d := range from {
 		to[i] = c.decl(d)
@@ -230,7 +232,7 @@ func (c *syntaxConverter) decls(from []Declaration) (to []ast.Decl) {
 	return to
 }
 
-func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
+func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 	switch from := from.(type) {
 	case nil:
 	case *Add:
@@ -644,9 +646,6 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 		}
 		c.gaps(from.After)
 	case *String:
-		if from == nil { // TODO: Why needed?
-			return nil
-		}
 		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
@@ -689,7 +688,7 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 	return to
 }
 
-func (c *syntaxConverter) exprs(from []Expression) (to []ast.Expr) {
+func (c *syntaxConv) exprs(from []Expression) (to []ast.Expr) {
 	to = make([]ast.Expr, len(from))
 	for i, e := range from {
 		to[i] = c.expr(e)
@@ -697,37 +696,41 @@ func (c *syntaxConverter) exprs(from []Expression) (to []ast.Expr) {
 	return to
 }
 
-func (c *syntaxConverter) gaps(ss []Gap) {
+func (c *syntaxConv) gaps(gs []Gap) {
 	var cg *ast.CommentGroup
-	var lastLine bool // Whether the last item was a line
-	for _, s := range ss {
-		switch s := s.(type) {
+	var previousWasLine bool
+	for _, g := range gs {
+		switch g := g.(type) {
 		case *Comment:
 			if cg == nil {
 				cg = &ast.CommentGroup{}
 			}
+			p := c.add(len(g.Text))
 			cg.List = append(cg.List, &ast.Comment{
-				Slash: c.add(len(s.Text)),
-				Text:  s.Text,
+				Slash: p,
+				Text:  g.Text,
 			})
-			// TODO: Add newlines in comment
-			lastLine = false
+			text := g.Text
+			for i := strings.IndexByte(text, '\n'); i != -1; text = text[i+1:] {
+				c.tokenFile.AddLine(c.tokenFile.Offset(p + token.Pos(i)))
+			}
+			previousWasLine = false
 		case *Line:
-			if lastLine && cg != nil {
+			if previousWasLine && cg != nil {
 				c.astFile.Comments = append(c.astFile.Comments, cg)
 				cg = nil
 			}
-			c.tokenFile.AddLine(c.tokenFile.Offset(c.add(1) + 1))
-			c.newLineEmpty = true
-			lastLine = true
+			c.add(lenNewline)
+			c.eol = true
+			previousWasLine = true
 		case *Space:
-			if s.Count > 0 {
-				c.add(s.Count)
-			} else {
-				c.add(1)
+			n := lenSpace
+			if g.Count > 0 {
+				n *= g.Count
 			}
+			c.add(n)
 		default:
-			panic(fmt.Sprintf("invalid context: %#v", s)) // TODO: Remove
+			panic(fmt.Sprintf("invalid gap: %#v", g))
 		}
 	}
 	if cg != nil {
@@ -735,7 +738,7 @@ func (c *syntaxConverter) gaps(ss []Gap) {
 	}
 }
 
-func (c *syntaxConverter) idents(from []*Name) (to []*ast.Ident) {
+func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 	to = make([]*ast.Ident, len(from))
 	for i, n := range from {
 		to[i] = c.expr(n).(*ast.Ident)
@@ -743,7 +746,7 @@ func (c *syntaxConverter) idents(from []*Name) (to []*ast.Ident) {
 	return to
 }
 
-func (c *syntaxConverter) results(from *ParamList) (to *ast.FieldList) {
+func (c *syntaxConv) results(from *ParamList) (to *ast.FieldList) {
 	if from == nil {
 		return nil
 	}
@@ -763,15 +766,15 @@ func (c *syntaxConverter) results(from *ParamList) (to *ast.FieldList) {
 	return to
 }
 
-func (c *syntaxConverter) node(from Syntax) (to ast.Node) {
+func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 	switch from := from.(type) {
 	case nil:
 	case *Field:
 		c.gaps(from.Before)
 		field := &ast.Field{}
 		field.Names = c.idents(from.Names)
-		if b, ok := c.expr(from.Tag).(*ast.BasicLit); ok {
-			field.Tag = b
+		if from.Tag != nil {
+			field.Tag = c.expr(from.Tag).(*ast.BasicLit)
 		}
 		field.Type = c.expr(from.Type)
 		c.gaps(from.After)
@@ -873,7 +876,7 @@ func (c *syntaxConverter) node(from Syntax) (to ast.Node) {
 	return to
 }
 
-func (c *syntaxConverter) spec(from Syntax) (to ast.Spec) {
+func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 	switch from := from.(type) {
 	case *Const:
 		c.gaps(from.Before)
@@ -914,7 +917,7 @@ func (c *syntaxConverter) spec(from Syntax) (to ast.Spec) {
 	return to
 }
 
-func (c *syntaxConverter) specs(from []Declaration) (to []ast.Spec) {
+func (c *syntaxConv) specs(from []Declaration) (to []ast.Spec) {
 	to = make([]ast.Spec, len(from))
 	for i, d := range from {
 		to[i] = c.spec(d)
@@ -922,7 +925,7 @@ func (c *syntaxConverter) specs(from []Declaration) (to []ast.Spec) {
 	return to
 }
 
-func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
+func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 	switch from := from.(type) {
 	case nil:
 	case *AddAssign:
@@ -1250,7 +1253,7 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 	return to
 }
 
-func (c *syntaxConverter) stmts(from []Statement) (to []ast.Stmt) {
+func (c *syntaxConv) stmts(from []Statement) (to []ast.Stmt) {
 	to = make([]ast.Stmt, len(from))
 	for i, s := range from {
 		to[i] = c.stmt(s)

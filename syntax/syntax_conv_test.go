@@ -1,54 +1,55 @@
 package syntax
 
 import (
-	"fmt"
-	"reflect"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
 
 	"github.com/kr/pretty"
 )
 
-func TestFun(t *testing.T) {
-	syn := &File{
-		Package: &Name{Text: "p"},
-		Decls: []Declaration{
-			&Import{
-				After: []Context{
-					&Line{},
-					&Line{},
-				},
-				Path: &String{Text: `"fmt"`},
-			},
-			&Func{
-				Name: &Name{Text: "F"},
-				Body: &Block{
-					List: []Statement{
-						&Return{
-							Before: []Context{&Line{}},
-							After:  []Context{&Line{}},
-							Results: []Expression{
-								&Int{Text: "123"},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	s, err := ToString(syn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(s)
-}
+// func TestFun(t *testing.T) {
+// 	syn := &File{
+// 		Package: &Name{Text: "p"},
+// 		Decls: []Declaration{
+// 			&Import{
+// 				After: []Context{
+// 					&Line{},
+// 					&Line{},
+// 				},
+// 				Path: &String{Text: `"fmt"`},
+// 			},
+// 			&Func{
+// 				Name: &Name{Text: "F"},
+// 				Body: &Block{
+// 					List: []Statement{
+// 						&Return{
+// 							Before: []Context{&Line{}},
+// 							After:  []Context{&Line{}},
+// 							Results: []Expression{
+// 								&Int{Text: "123"},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+// 	s, err := ToString(syn)
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Log(s)
+// }
 
 // TODO: Test Ellipsis markup around Ellipsis.Elem markup in Call
 
-func TestToString_expressions(t *testing.T) {
+/*func TestToString_expressions(t *testing.T) {
 	t.Parallel()
 	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
-	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
-	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
+	after := reflect.ValueOf([]Context{&Comment{Text: "/TODOaTODO/"}})
+	before := reflect.ValueOf([]Context{&Comment{Text: "/TODObTODO/"}})
 	for exp, str := range map[Expression]string{
 		&Add{X: z, Y: y}:                            "z + y",
 		&And{X: z, Y: y}:                            "z && y",
@@ -261,7 +262,7 @@ func TestToString_expressions(t *testing.T) {
 					elem.FieldByName("After").Set(after)
 					if a, err := ToString(file); err != nil {
 						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(exp), err)
-					} else if e := fmt.Sprintf("package p\n\nvar _ = /*b*/ %s /*a*/\n", str); a != e {
+					} else if e := fmt.Sprintf("package p\n\nvar _ = /TODObTODO/ %s /TODOaTODO/\n", str); a != e {
 						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(exp))
 					}
 				})
@@ -273,8 +274,8 @@ func TestToString_expressions(t *testing.T) {
 func TestToString_statements(t *testing.T) {
 	t.Parallel()
 	u, v, w, x, y, z := &Name{Text: "u"}, &Name{Text: "v"}, &Name{Text: "w"}, &Name{Text: "x"}, &Name{Text: "y"}, &Name{Text: "z"}
-	after := reflect.ValueOf([]Context{&Comment{Text: "/*a*/"}})
-	before := reflect.ValueOf([]Context{&Comment{Text: "/*b*/"}})
+	after := reflect.ValueOf([]Context{&Comment{Text: "/TODOaTODO/"}})
+	before := reflect.ValueOf([]Context{&Comment{Text: "/TODObTODO/"}})
 	for state, str := range map[Statement]string{
 		&AddAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:    "z, y += x, w",
 		&AndNotAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y &^= x, w",
@@ -428,36 +429,42 @@ func TestToString_statements(t *testing.T) {
 					elem.FieldByName("After").Set(after)
 					if a, err := ToString(file); err != nil {
 						t.Errorf("Syntax: %s\nError: %v", pretty.Sprint(state), err)
-					} else if e := fmt.Sprintf("package p\n\nfunc f() {\n\tswitch {\n\t}\n\t/*b*/ %s /*a*/\n}\n", str); a != e {
+					} else if e := fmt.Sprintf("package p\n\nfunc f() {\n\tswitch {\n\t}\n\t/TODObTODO/ %s /TODOaTODO/\n}\n", str); a != e {
 						t.Errorf("Syntax strings do not match\nActual:   %#v\nExpected: %#v\nSyntax: %s", a, e, pretty.Sprint(state))
 					}
 				})
 			})
 		}(state, str)
 	}
-}
+}*/
 
-/*
-func parseFile(content string) *ast.File {
-	f, err := parser.ParseFile(token.NewFileSet(), "test.go", content, parser.ParseComments)
+func parse(content string) (*token.FileSet, *ast.File) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, "test.go", content, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
+	return fset, f
+}
+
+func parseFile(content string) *ast.File {
+	_, f := parse(content)
 	return f
 }
 
 func TestParse(t *testing.T) {
-	f := parseFile(`package p
-func f() {
-	switch a, b := c, d; y.(type) {
-	}
-}
+	fset, f := parse(`package p
+
+/* Test
+int */
+func f() {}
 `)
+	pretty.Println(fset)
 	pretty.Println(f)
 	t.FailNow()
 }
 
-
+/*
 func TestEmpty(t *testing.T) {
 	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
 	if err != nil {
