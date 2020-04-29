@@ -108,7 +108,7 @@ func newSyntaxConv() *syntaxConv {
 	fset := token.NewFileSet()
 	return &syntaxConv{
 		astFile:      &ast.File{},
-		tokenFile:    fset.AddFile("", -1, 99999999999999), // TODO: Max int
+		tokenFile:    fset.AddFile("", -1, int((^uint(0))>>1)),
 		tokenFileSet: fset,
 	}
 }
