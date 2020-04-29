@@ -1,3 +1,6 @@
+// TODO:
+// - Allow Line as a Statement? What happens if they put Line as the sole statement in a block? Does that need an EmptyStmt?
+
 package syntax
 
 // Declarations
@@ -219,304 +222,269 @@ func (*VarList) Syntax()          {}
 func (*Xor) Syntax()              {}
 func (*XorAssign) Syntax()        {}
 
-// Context
+// Gap
 
-type Context interface {
-	Context()
+type Gap interface {
+	Gap()
 }
 
-func (*Comment) Context() {}
-func (*Line) Context()    {}
-func (*Space) Context()   {}
+func (*Comment) Gap() {}
+func (*Line) Gap()    {}
+func (*Space) Gap()   {}
+
+type Context struct {
+	Before []Gap
+	After  []Gap
+}
+
+// Productions
+
+type Add struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type AddAssign struct {
+	Context
+	Left  []Expression
+	Right []Expression
+}
+
+type And struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type AndNot struct {
+	Context
+	X Expression
+	Y Expression
+}
 
 type Array struct {
-	Before  []Context
-	After   []Context
+	Context
 	Length  Expression
 	Element Expression
 }
 
 type Assert struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Type   Expression
+	Context
+	X    Expression
+	Type Expression
 }
 
 type Assign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
-}
-
-type Define struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
-}
-
-type Add struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Subtract struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Multiply struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Divide struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Remainder struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type BitAnd struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	X Expression
+	Y Expression
 }
 
 type BitOr struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	X Expression
+	Y Expression
 }
 
-type And struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+type Define struct {
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
-type Or struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Xor struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type ShiftLeft struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type ShiftRight struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type AndNot struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Send struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+type Divide struct {
+	Context
+	X Expression
+	Y Expression
 }
 
 type Equal struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type NotEqual struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type Less struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
-}
-
-type LessEqual struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	X Expression
+	Y Expression
 }
 
 type Greater struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	X Expression
+	Y Expression
 }
 
 type GreaterEqual struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Y      Expression
+	Context
+	X Expression
+	Y Expression
 }
 
-type AddAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+type Less struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type LessEqual struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Multiply struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type NotEqual struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Or struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Remainder struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Send struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type ShiftLeft struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type ShiftRight struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Subtract struct {
+	Context
+	X Expression
+	Y Expression
+}
+
+type Xor struct {
+	Context
+	X Expression
+	Y Expression
 }
 
 type SubtractAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type MultiplyAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type DivideAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type RemainderAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type BitAndAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type BitOrAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type XorAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type ShiftLeftAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type ShiftRightAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type AndNotAssign struct {
-	Before []Context
-	After  []Context
-	Left   []Expression
-	Right  []Expression
+	Context
+	Left  []Expression
+	Right []Expression
 }
 
 type Block struct {
-	Before []Context
-	After  []Context
-	List   []Statement
+	Context
+	List []Statement
 }
 
 type Break struct {
-	Before []Context
-	After  []Context
-	Label  *Name
+	Context
+	Label *Name
 }
 
 type Call struct {
-	Before []Context
-	After  []Context
-	Fun    Expression
-	Args   []Expression
+	Context
+	Fun  Expression
+	Args []Expression
 }
 
 type Case struct {
-	Before []Context
-	After  []Context
-	Comm   Statement
-	List   []Expression
-	Body   []Statement
+	Context
+	Comm Statement
+	List []Expression
+	Body []Statement
 }
 
 type Chan struct {
-	Before []Context
-	After  []Context
-	Value  Expression
+	Context
+	Value Expression
 }
 
 type ChanIn struct {
-	Before []Context
-	After  []Context
-	Value  Expression
+	Context
+	Value Expression
 }
 
 type ChanOut struct {
-	Before []Context
-	After  []Context
-	Value  Expression
+	Context
+	Value Expression
 }
 
 type Comment struct {
@@ -529,49 +497,47 @@ type Comment struct {
 // }
 
 type Composite struct {
-	Before []Context
-	After  []Context
-	Type   Expression
-	Elts   []Expression
+	Context
+	Type Expression
+	Elts []Expression
 }
 
 type Const struct {
-	Before []Context
-	After  []Context
+	Context
 	Names  []*Name
 	Type   Expression
 	Values []Expression
 }
 
 type ConstList struct {
-	Before  []Context
-	After   []Context
-	Between []Context
+	Context
+	Between []Gap
 	List    []Declaration
 }
 
 type Continue struct {
-	Before []Context
-	After  []Context
-	Label  *Name
+	Context
+	Label *Name
 }
 
 type Dec struct {
-	Before []Context
-	After  []Context
-	X      Expression
+	Context
+	X Expression
 }
 
 type Defer struct {
-	Before []Context
-	After  []Context
-	Call   *Call
+	Context
+	Call *Call
+}
+
+type Deref struct {
+	Context
+	X Expression
 }
 
 type Ellipsis struct {
-	Before []Context
-	After  []Context
-	Elem   Expression
+	Context
+	Elem Expression
 }
 
 // TODO:
@@ -582,49 +548,42 @@ type Ellipsis struct {
 // }
 
 type Fallthrough struct {
-	Before []Context
-	After  []Context
+	Context
 }
 
 type Field struct {
-	Before []Context
-	After  []Context
-	Names  []*Name
-	Type   Expression
-	Tag    *String
+	Context
+	Names []*Name
+	Type  Expression
+	Tag   *String
 }
 
 type FieldList struct {
-	Before []Context
-	After  []Context
-	List   []*Field
+	Context
+	List []*Field
 }
 
 type File struct {
-	Before  []Context
-	After   []Context
+	Context
 	Package *Name
 	Decls   []Declaration
 }
 
 type Float struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
 }
 
 type For struct {
-	Before []Context
-	After  []Context
-	Init   Statement
-	Cond   Expression
-	Post   Statement
-	Body   *Block
+	Context
+	Init Statement
+	Cond Expression
+	Post Statement
+	Body *Block
 }
 
 type Func struct {
-	Before   []Context
-	After    []Context
+	Context
 	Receiver *Receiver
 	Name     *Name
 	Params   *ParamList
@@ -633,143 +592,139 @@ type Func struct {
 }
 
 type If struct {
-	Before []Context
-	After  []Context
-	Init   Statement
-	Cond   Expression
-	Body   *Block
-	Else   Statement
+	Context
+	Init Statement
+	Cond Expression
+	Body *Block
+	Else Statement
 }
 
 type Go struct {
-	Before []Context
-	After  []Context
-	Call   *Call
+	Context
+	Call *Call
 }
 
 type Goto struct {
-	Before []Context
-	After  []Context
-	Label  *Name
+	Context
+	Label *Name
 }
 
 type Imag struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
 }
 
 type Import struct {
-	Before []Context
-	After  []Context
-	Name   *Name
-	Path   *String
+	Context
+	Name *Name
+	Path *String
 }
 
 type ImportList struct {
-	Before  []Context
-	After   []Context
-	Between []Context
+	Context
+	Between []Gap
 	List    []Declaration
 }
 
 type Inc struct {
-	Before []Context
-	After  []Context
-	X      Expression
+	Context
+	X Expression
 }
 
 type Index struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Index  Expression
+	Context
+	X     Expression
+	Index Expression
 }
 
 type Int struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
 }
 
 type Interface struct {
-	Before  []Context
-	After   []Context
+	Context
 	Methods *MethodList
 }
 
 type KeyValue struct {
-	Before []Context
-	After  []Context
-	Key    Expression
-	Value  Expression
+	Context
+	Key   Expression
+	Value Expression
 }
 
 type Label struct {
-	Before []Context
-	After  []Context
-	Label  *Name
-	Stmt   Statement
+	Context
+	Label *Name
+	Stmt  Statement
 }
 
-type Line struct{}
+type Line struct {
+	Count int
+}
 
 type Map struct {
-	Before []Context
-	After  []Context
-	Key    Expression
-	Value  Expression
+	Context
+	Key   Expression
+	Value Expression
 }
 
 type Method struct {
-	Before  []Context
-	After   []Context
+	Context
 	Name    *Name
 	Params  *ParamList
 	Results *ParamList
 }
 
 type MethodList struct {
-	Before []Context
-	After  []Context
-	List   []*Method
+	Context
+	List []*Method
 }
 
 type Name struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
+}
+
+type Negate struct {
+	Context
+	X Expression
+}
+
+type Not struct {
+	Context
+	X Expression
 }
 
 type Param struct {
-	Before []Context
-	After  []Context
-	Names  []*Name
-	Type   Expression
+	Context
+	Names []*Name
+	Type  Expression
 }
 
 type ParamList struct {
-	Before []Context
-	After  []Context
-	List   []*Param
+	Context
+	List []*Param
 }
 
 type Paren struct {
-	Before []Context
-	After  []Context
-	X      Expression
+	Context
+	X Expression
+}
+
+type Pointer struct {
+	Context
+	X Expression
 }
 
 type Receiver struct {
-	Before []Context
-	After  []Context
-	Name   *Name
-	Type   Expression
+	Context
+	Name *Name
+	Type Expression
 }
 
 type Range struct {
-	Before []Context
-	After  []Context
+	Context
 	Assign bool
 	Key    Expression
 	Value  Expression
@@ -777,38 +732,43 @@ type Range struct {
 	Body   *Block
 }
 
+type Receive struct {
+	Context
+	X Expression
+}
+
+type Ref struct {
+	Context
+	X Expression
+}
+
 type Return struct {
-	Before  []Context
-	After   []Context
+	Context
 	Results []Expression
 }
 
 type Rune struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
 }
 
 type Select struct {
-	Before []Context
-	After  []Context
-	Body   *Block
+	Context
+	Body *Block
 }
 
 type Selector struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Sel    *Name
+	Context
+	X   Expression
+	Sel *Name
 }
 
 type Slice struct {
-	Before []Context
-	After  []Context
-	X      Expression
-	Low    Expression
-	High   Expression
-	Max    Expression
+	Context
+	X    Expression
+	Low  Expression
+	High Expression
+	Max  Expression
 }
 
 type Space struct {
@@ -816,88 +776,45 @@ type Space struct {
 }
 
 type String struct {
-	Before []Context
-	After  []Context
-	Text   string
+	Context
+	Text string
 }
 
 type Struct struct {
-	Before []Context
-	After  []Context
+	Context
 	Fields *FieldList
 }
 
 type Switch struct {
-	Before []Context
-	After  []Context
-	Init   Statement
-	Value  Expression
-	Type   Statement
-	Body   *Block
+	Context
+	Init  Statement
+	Value Expression
+	Type  Statement
+	Body  *Block
 }
 
 type Type struct {
-	Before []Context
-	After  []Context
+	Context
 	Assign bool
 	Name   *Name
 	Type   Expression
 }
 
 type TypeList struct {
-	Before  []Context
-	After   []Context
-	Between []Context
+	Context
+	Between []Gap
 	List    []Declaration
 }
 
-type Pointer struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
-type Ref struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
-type Deref struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
-type Negate struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
-type Receive struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
-type Not struct {
-	Before []Context
-	After  []Context
-	X      Expression
-}
-
 type Var struct {
-	Before []Context
-	After  []Context
+	Context
 	Names  []*Name
 	Type   Expression
 	Values []Expression
 }
 
 type VarList struct {
-	Before  []Context
-	After   []Context
-	Between []Context
+	Context
+	Between []Gap
 	List    []Declaration // TODO: Change to []*Var
 }

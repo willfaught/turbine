@@ -8,10 +8,38 @@ import (
 	"github.com/kr/pretty"
 )
 
-func TestContext(t *testing.T) {
-	// TODO
-	// a := []Context{&Comment{Text: "/*a*/"}}
-	// b := []Context{&Comment{Text: "/*b*/"}}
+func TestFun(t *testing.T) {
+	syn := &File{
+		Package: &Name{Text: "p"},
+		Decls: []Declaration{
+			&Import{
+				After: []Context{
+					&Line{},
+					&Line{},
+				},
+				Path: &String{Text: `"fmt"`},
+			},
+			&Func{
+				Name: &Name{Text: "F"},
+				Body: &Block{
+					List: []Statement{
+						&Return{
+							Before: []Context{&Line{}},
+							After:  []Context{&Line{}},
+							Results: []Expression{
+								&Int{Text: "123"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	s, err := ToString(syn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(s)
 }
 
 // TODO: Test Ellipsis markup around Ellipsis.Elem markup in Call
@@ -338,7 +366,7 @@ func TestToString_statements(t *testing.T) {
 		&Switch{Value: z}: "switch z {\n\t}",
 		&Switch{Init: &Define{Left: []Expression{z}, Right: []Expression{y}}, Value: x}: "switch z := y; x {\n\t}",
 		&Switch{Type: &Assert{X: z}}: "switch z.(type) {\n\t}",
-		&Switch{Type: &Define{Left: []Expression{z}, Right: []Expression{&Assert{X: y}}}}:                                                               "switch z := y.(type) {\n\t}",
+		&Switch{Type: &Define{Left: []Expression{z}, Right: []Expression{&Assert{X: y}}}}: "switch z := y.(type) {\n\t}",
 		&Switch{
 			Init: &Define{Left: []Expression{z}, Right: []Expression{y}},
 			Type: &Define{Left: []Expression{x}, Right: []Expression{&Assert{X: w}}},
@@ -368,7 +396,7 @@ func TestToString_statements(t *testing.T) {
 				},
 			},
 		}: "switch z := y; x {\n\tcase <-w:\n\t\tbreak\n\tcase v <- u:\n\t\tbreak\n\tdefault:\n\t\tbreak\n\t}",
-		&XorAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}:  "z, y ^= x, w",
+		&XorAssign{Left: []Expression{z, y}, Right: []Expression{x, w}}: "z, y ^= x, w",
 	} {
 		func(state Statement, str string) {
 			t.Run(fmt.Sprintf("%#v", state), func(t *testing.T) {

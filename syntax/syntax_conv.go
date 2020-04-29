@@ -91,7 +91,7 @@ func ToString(s Syntax) (string, error) {
 	fset, n := ToNode(s)
 	b := &bytes.Buffer{}
 	if err := format.Node(b, fset, n); err != nil {
-		return "", fmt.Errorf("cannot format node: %w", err)
+		return "", fmt.Errorf("cannot format node: %v", err)
 	}
 	return b.String(), nil
 }
@@ -695,7 +695,7 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 	return to
 }
 
-func (c *syntaxConv) markup(ss []Context) {
+func (c *syntaxConv) markup(ss []Gap) {
 	var cg *ast.CommentGroup
 	var lastLine bool // Whether the last item was a line
 	for _, s := range ss {
@@ -844,8 +844,10 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 				names = []*Name{from.Name}
 			}
 			to = c.node(&ParamList{
-				Before: from.Before,
-				After:  from.After,
+				Context: Context{
+					Before: from.Before,
+					After:  from.After,
+				},
 				List: []*Param{
 					&Param{
 						Names: names,
