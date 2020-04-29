@@ -153,10 +153,12 @@ func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 			Recv: c.node(from.Receiver).(*ast.FieldList),
 			Name: c.expr(from.Name).(*ast.Ident),
 			Type: &ast.FuncType{
-				Func:    funcPos,
-				Params:  c.node(from.Params).(*ast.FieldList),
-				Results: c.results(from.Results),
+				Func:   funcPos,
+				Params: c.node(from.Params).(*ast.FieldList),
 			},
+		}
+		if from.Results != nil {
+			funcDecl.Type.Results = c.results(from.Results)
 		}
 		if from.Body != nil {
 			funcDecl.Body = c.stmt(from.Body).(*ast.BlockStmt)
@@ -747,9 +749,6 @@ func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
 }
 
 func (c *syntaxConv) results(from *ParamList) (to *ast.FieldList) {
-	if from == nil {
-		return nil
-	}
 	parens := len(from.List) != 1 || len(from.List[0].Names) > 0
 	c.gaps(from.Before)
 	to = &ast.FieldList{}
@@ -805,9 +804,11 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		to = &ast.Field{
 			Names: []*ast.Ident{c.expr(from.Name).(*ast.Ident)},
 			Type: &ast.FuncType{
-				Params:  c.node(from.Params).(*ast.FieldList),
-				Results: c.results(from.Results),
+				Params: c.node(from.Params).(*ast.FieldList),
 			},
+		}
+		if from.Results != nil {
+			to.Type.Results = c.results(from.Results)
 		}
 		c.gaps(from.After)
 	case *MethodList:
