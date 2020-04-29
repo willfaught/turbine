@@ -814,8 +814,8 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
 		fieldList.Opening = c.add(lenLbrace)
-		for _, f := range from.List {
-			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
+		for _, m := range from.List {
+			fieldList.List = append(fieldList.List, c.node(m).(*ast.Field))
 		}
 		fieldList.Closing = c.add(lenRbrace)
 		c.gaps(from.After)
@@ -831,8 +831,8 @@ func (c *syntaxConv) node(from Syntax) (to ast.Node) {
 		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
 		fieldList.Opening = c.add(lenLparen)
-		for _, f := range from.List {
-			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
+		for _, p := range from.List {
+			fieldList.List = append(fieldList.List, c.node(p).(*ast.Field))
 		}
 		fieldList.Closing = c.add(lenRparen)
 		c.gaps(from.After)
