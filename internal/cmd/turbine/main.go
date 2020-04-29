@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/willfaught/turbine/turbine"
+	"github.com/willfaught/turbine/internal/turbine"
 )
 
 var suffixes = []string{
