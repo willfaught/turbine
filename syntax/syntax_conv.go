@@ -123,29 +123,29 @@ func (c *syntaxConverter) add(n int) token.Pos {
 func (c *syntaxConverter) decl(from Declaration) (to ast.Decl) {
 	switch from := from.(type) {
 	case *Const:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.GenDecl{
 			TokPos: c.add(lenConst),
 			Tok:    token.CONST,
 			Specs:  []ast.Spec{c.spec(from)},
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ConstList:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		g := &ast.GenDecl{}
 		g.TokPos = c.add(lenConst)
 		g.Tok = token.CONST
-		c.markup(from.Between)
+		c.gaps(from.Between)
 		g.Lparen = c.add(lenLparen)
 		g.Specs = c.specs(from.List)
 		g.Rparen = c.add(lenRparen)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = g
 	case *Func:
 		if from.Params == nil {
 			from.Params = &ParamList{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		funcPos := c.add(lenFunc)
 		funcDecl := &ast.FuncDecl{
 			Recv: c.node(from.Receiver).(*ast.FieldList),
@@ -159,64 +159,64 @@ func (c *syntaxConverter) decl(from Declaration) (to ast.Decl) {
 		if from.Body != nil {
 			funcDecl.Body = c.stmt(from.Body).(*ast.BlockStmt)
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = funcDecl
 	case *Import:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.GenDecl{
 			TokPos: c.add(lenImport),
 			Tok:    token.IMPORT,
 			Specs:  []ast.Spec{c.spec(from)},
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ImportList:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		g := &ast.GenDecl{}
 		g.TokPos = c.add(lenImport)
 		g.Tok = token.IMPORT
-		c.markup(from.Between)
+		c.gaps(from.Between)
 		g.Lparen = c.add(lenLparen)
 		g.Specs = c.specs(from.List)
 		g.Rparen = c.add(lenRparen)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = g
 	case *Type:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.GenDecl{
 			TokPos: c.add(lenType),
 			Tok:    token.TYPE,
 			Specs:  []ast.Spec{c.spec(from)},
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *TypeList:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		g := &ast.GenDecl{}
 		g.TokPos = c.add(lenType)
 		g.Tok = token.TYPE
-		c.markup(from.Between)
+		c.gaps(from.Between)
 		g.Lparen = c.add(lenLparen)
 		g.Specs = c.specs(from.List)
 		g.Rparen = c.add(lenRparen)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = g
 	case *Var:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.GenDecl{
 			TokPos: c.add(lenVar),
 			Tok:    token.VAR,
 			Specs:  []ast.Spec{c.spec(from)},
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *VarList:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		g := &ast.GenDecl{}
 		g.TokPos = c.add(lenVar)
 		g.Tok = token.VAR
-		c.markup(from.Between)
+		c.gaps(from.Between)
 		g.Lparen = c.add(lenLparen)
 		g.Specs = c.specs(from.List)
 		g.Rparen = c.add(lenRparen)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = g
 	}
 	return to
@@ -234,71 +234,71 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 	switch from := from.(type) {
 	case nil:
 	case *Add:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenAdd),
 			Op:    token.ADD,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *And:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenLand),
 			Op:    token.LAND,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *AndNot:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenAndNot),
 			Op:    token.AND_NOT,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Array:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		a := &ast.ArrayType{
 			Lbrack: c.add(lenLbrack),
 			Len:    c.expr(from.Length),
 		}
 		c.add(lenRbrack)
 		a.Elt = c.expr(from.Element)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = a
 	case *Assert:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.TypeAssertExpr{
 			X:      c.expr(from.Value),
 			Lparen: c.add(lenLparen),
 			Type:   c.expr(from.Type),
 			Rparen: c.add(lenRparen),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *BitAnd:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenAnd),
 			Op:    token.AND,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *BitOr:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenOr),
 			Op:    token.OR,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Call:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		call := &ast.CallExpr{
 			Fun:    c.expr(from.Fun),
 			Lparen: c.add(lenLparen),
@@ -310,37 +310,37 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 				args[i] = c.expr(e)
 			}
 			if e, ok := from.Args[last].(*Ellipsis); ok {
-				c.markup(e.Before)
+				c.gaps(e.Before)
 				call.Ellipsis = c.add(lenEllipsis)
 				args[last] = c.expr(e.Elem)
-				c.markup(e.After)
+				c.gaps(e.After)
 			} else {
 				args[last] = c.expr(from.Args[last])
 			}
 			call.Args = args
 		}
 		call.Rparen = c.add(lenRparen)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = call
 	case *Chan:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ChanType{
 			Dir:   ast.RECV | ast.SEND,
 			Begin: c.add(lenChan + 1),
 			Value: c.expr(from.Value),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ChanIn:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ChanType{
 			Dir:   ast.RECV,
 			Begin: c.add(lenChan),
 			Arrow: c.add(lenArrow + 1),
 			Value: c.expr(from.Value),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ChanOut:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		var p = c.add(lenChan + lenArrow + 1)
 		to = &ast.ChanType{
 			Dir:   ast.SEND,
@@ -348,61 +348,61 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 			Arrow: p,
 			Value: c.expr(from.Value),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Composite:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.CompositeLit{
 			Type:   c.expr(from.Type),
 			Lbrace: c.add(lenLbrace),
 			Elts:   c.exprs(from.Elts),
 			Rbrace: c.add(lenRbrace),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Deref:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.StarExpr{
 			Star: c.add(lenMul),
 			X:    c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Divide:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenQuo),
 			Op:    token.QUO,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Ellipsis:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.Ellipsis{
 			Ellipsis: c.add(lenEllipsis),
 			Elt:      c.expr(from.Elem),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Equal:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenEql),
 			Op:    token.EQL,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Float:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
 			Kind:     token.FLOAT,
 			Value:    from.Text,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Func:
 		if from.Params == nil {
 			from.Params = &ParamList{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		funcType := &ast.FuncType{
 			Func:    c.add(lenFunc),
 			Params:  c.node(from.Params).(*ast.FieldList),
@@ -416,223 +416,223 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 				Body: c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Greater:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenGtr),
 			Op:    token.GTR,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *GreaterEqual:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenGeq),
 			Op:    token.GEQ,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Imag:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
 			Kind:     token.IMAG,
 			Value:    from.Text,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Index:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.IndexExpr{
 			X:      c.expr(from.Container),
 			Lbrack: c.add(lenLbrack),
 			Index:  c.expr(from.Param),
 			Rbrack: c.add(lenRbrack),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Int:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
 			Kind:     token.INT,
 			Value:    from.Text,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Interface:
 		if from.Methods == nil {
 			from.Methods = &MethodList{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.InterfaceType{
 			Interface: c.add(lenInterface),
 			Methods:   c.node(from.Methods).(*ast.FieldList),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *KeyValue:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.KeyValueExpr{
 			Key:   c.expr(from.Key),
 			Colon: c.add(lenColon),
 			Value: c.expr(from.Value),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Less:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenLss),
 			Op:    token.LSS,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *LessEqual:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenLeq),
 			Op:    token.LEQ,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Map:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.MapType{
 			Map:   c.add(lenMap),
 			Key:   c.expr(from.Key),
 			Value: c.expr(from.Value),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Multiply:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenMul),
 			Op:    token.MUL,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Name:
 		if from == nil { // Branch labels, import aliases
 			to = (*ast.Ident)(nil)
 		} else {
-			c.markup(from.Before)
+			c.gaps(from.Before)
 			to = &ast.Ident{
 				NamePos: c.add(len(from.Text)),
 				Name:    from.Text,
 			}
-			c.markup(from.After)
+			c.gaps(from.After)
 		}
 	case *Negate:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.UnaryExpr{
 			OpPos: c.add(lenSub),
 			Op:    token.SUB,
 			X:     c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Not:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.UnaryExpr{
 			OpPos: c.add(lenNot),
 			Op:    token.NOT,
 			X:     c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *NotEqual:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenNeq),
 			Op:    token.NEQ,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Or:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenLor),
 			Op:    token.LOR,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Paren:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ParenExpr{
 			Lparen: c.add(lenLparen),
 			X:      c.expr(from.Left),
 			Rparen: c.add(lenRparen),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Pointer:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.StarExpr{
 			Star: c.add(lenMul),
 			X:    c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Receive:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.UnaryExpr{
 			OpPos: c.add(lenArrow),
 			Op:    token.ARROW,
 			X:     c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Ref:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.UnaryExpr{
 			OpPos: c.add(lenAnd),
 			Op:    token.AND,
 			X:     c.expr(from.Left),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Remainder:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenRem),
 			Op:    token.REM,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Rune:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
 			Kind:     token.CHAR,
 			Value:    from.Text,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Selector:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		e := &ast.SelectorExpr{X: c.expr(from.Value)}
 		c.add(lenPeriod)
 		e.Sel = c.expr(from.Name).(*ast.Ident)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = e
 	case *ShiftLeft:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenShl),
 			Op:    token.SHL,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ShiftRight:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenShr),
 			Op:    token.SHR,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Slice:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.SliceExpr{
 			X:      c.expr(from.Slice),
 			Lbrack: c.add(lenLbrack),
@@ -642,47 +642,47 @@ func (c *syntaxConverter) expr(from Expression) (to ast.Expr) {
 			Slice3: from.Max != nil,
 			Rbrack: c.add(lenRbrack),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *String:
 		if from == nil { // TODO: Why needed?
 			return nil
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BasicLit{
 			ValuePos: c.add(len(from.Text)),
 			Kind:     token.STRING,
 			Value:    from.Text,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Struct:
 		if from.Fields == nil {
 			from.Fields = &FieldList{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.StructType{
 			Struct:     c.add(lenStruct),
 			Fields:     c.node(from.Fields).(*ast.FieldList),
 			Incomplete: false, // TODO: What is this for?
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Subtract:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenSub),
 			Op:    token.SUB,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Xor:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BinaryExpr{
 			X:     c.expr(from.Left),
 			OpPos: c.add(lenXor),
 			Op:    token.XOR,
 			Y:     c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	default:
 		panic(fmt.Sprintf("invalid expression: %#v", from))
 	}
@@ -697,15 +697,7 @@ func (c *syntaxConverter) exprs(from []Expression) (to []ast.Expr) {
 	return to
 }
 
-func (c *syntaxConverter) idents(from []*Name) (to []*ast.Ident) {
-	to = make([]*ast.Ident, len(from))
-	for i, n := range from {
-		to[i] = c.expr(n).(*ast.Ident)
-	}
-	return to
-}
-
-func (c *syntaxConverter) markup(ss []Gap) {
+func (c *syntaxConverter) gaps(ss []Gap) {
 	var cg *ast.CommentGroup
 	var lastLine bool // Whether the last item was a line
 	for _, s := range ss {
@@ -743,12 +735,20 @@ func (c *syntaxConverter) markup(ss []Gap) {
 	}
 }
 
+func (c *syntaxConverter) idents(from []*Name) (to []*ast.Ident) {
+	to = make([]*ast.Ident, len(from))
+	for i, n := range from {
+		to[i] = c.expr(n).(*ast.Ident)
+	}
+	return to
+}
+
 func (c *syntaxConverter) results(from *ParamList) (to *ast.FieldList) {
 	if from == nil {
 		return nil
 	}
 	parens := len(from.List) != 1 || len(from.List[0].Names) > 0
-	c.markup(from.Before)
+	c.gaps(from.Before)
 	to = &ast.FieldList{}
 	if parens {
 		to.Opening = c.add(lenLparen)
@@ -759,7 +759,7 @@ func (c *syntaxConverter) results(from *ParamList) (to *ast.FieldList) {
 	if parens {
 		to.Closing = c.add(lenRparen)
 	}
-	c.markup(from.After)
+	c.gaps(from.After)
 	return to
 }
 
@@ -767,38 +767,38 @@ func (c *syntaxConverter) node(from Syntax) (to ast.Node) {
 	switch from := from.(type) {
 	case nil:
 	case *Field:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		field := &ast.Field{}
 		field.Names = c.idents(from.Names)
 		if b, ok := c.expr(from.Tag).(*ast.BasicLit); ok {
 			field.Tag = b
 		}
 		field.Type = c.expr(from.Type)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = field
 	case *FieldList:
 		// TODO: Refactor into helper for Field/Method/ParamList
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
 		fieldList.Opening = c.add(lenLbrace)
 		for _, f := range from.List {
 			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 		}
 		fieldList.Closing = c.add(lenRbrace)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = fieldList
 	case *File:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		c.astFile.Package = c.add(lenPackage)
 		c.astFile.Name = c.expr(from.Package).(*ast.Ident)
 		c.astFile.Decls = c.decls(from.Decls)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = c.astFile
 	case *Method:
 		if from.Params == nil {
 			from.Params = &ParamList{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.Field{
 			Names: []*ast.Ident{c.expr(from.Name).(*ast.Ident)},
 			Type: &ast.FuncType{
@@ -806,36 +806,36 @@ func (c *syntaxConverter) node(from Syntax) (to ast.Node) {
 				Results: c.results(from.Results),
 			},
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *MethodList:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		fieldList := &ast.FieldList{}
 		fieldList.Opening = c.add(lenLbrace)
 		for _, f := range from.List {
 			fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 		}
 		fieldList.Closing = c.add(lenRbrace)
-		c.markup(from.After)
+		c.gaps(from.After)
 		to = fieldList
 	case *Param:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.Field{
 			Names: c.idents(from.Names),
 			Type:  c.expr(from.Type),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ParamList:
 		if from == nil { // Func with no results
 			to = (*ast.FieldList)(nil)
 		} else {
-			c.markup(from.Before)
+			c.gaps(from.Before)
 			fieldList := &ast.FieldList{}
 			fieldList.Opening = c.add(lenLparen)
 			for _, f := range from.List {
 				fieldList.List = append(fieldList.List, c.node(f).(*ast.Field))
 			}
 			fieldList.Closing = c.add(lenRparen)
-			c.markup(from.After)
+			c.gaps(from.After)
 			to = fieldList
 		}
 	case *Receiver:
@@ -876,38 +876,38 @@ func (c *syntaxConverter) node(from Syntax) (to ast.Node) {
 func (c *syntaxConverter) spec(from Syntax) (to ast.Spec) {
 	switch from := from.(type) {
 	case *Const:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ValueSpec{
 			Names:  c.idents(from.Names),
 			Type:   c.expr(from.Type),
 			Values: c.exprs(from.Values),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Import:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ImportSpec{
 			Name:   c.expr(from.Name).(*ast.Ident),
 			Path:   c.expr(from.Path).(*ast.BasicLit),
 			EndPos: 0, // TODO: Verify this should be 0
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Type:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		s := &ast.TypeSpec{}
 		s.Name = c.expr(from.Name).(*ast.Ident)
 		if from.Assign {
 			s.Assign = c.add(lenAssign)
 		}
 		s.Type = c.expr(from.Type)
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Var:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ValueSpec{
 			Names:  c.idents(from.Names),
 			Type:   c.expr(from.Type),
 			Values: c.exprs(from.Values),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	default:
 		panic(fmt.Sprintf("invalid spec: %#v", from))
 	}
@@ -926,68 +926,68 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 	switch from := from.(type) {
 	case nil:
 	case *AddAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenAddAssign),
 			Tok:    token.ADD_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *AndNotAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenAndNotAssign),
 			Tok:    token.AND_NOT_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Assign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenAssign),
 			Tok:    token.ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *BitAndAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenAndAssign),
 			Tok:    token.AND_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *BitOrAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenOrAssign),
 			Tok:    token.OR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Block:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BlockStmt{
 			Lbrace: c.add(lenLbrace),
 			List:   c.stmts(from.List),
 			Rbrace: c.add(lenRbrace),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Break:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BranchStmt{
 			TokPos: c.add(lenBreak),
 			Tok:    token.BREAK,
 			Label:  c.expr(from.Label).(*ast.Ident),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Case:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		if from.Comm == nil {
 			to = &ast.CaseClause{
 				Case:  c.add(lenCase),
@@ -1003,65 +1003,65 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 				Body:  c.stmts(from.Body),
 			}
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Continue:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BranchStmt{
 			TokPos: c.add(lenContinue),
 			Tok:    token.CONTINUE,
 			Label:  c.expr(from.Label).(*ast.Ident),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Dec:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.IncDecStmt{
 			X:      c.expr(from.Left),
 			TokPos: c.add(lenDec),
 			Tok:    token.DEC,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Defer:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.DeferStmt{
 			Defer: c.add(lenDefer),
 			Call:  c.expr(from.Call).(*ast.CallExpr),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Define:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenDefine),
 			Tok:    token.DEFINE,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *DivideAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenQuoAssign),
 			Tok:    token.QUO_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	// TODO:
 	// case *Empty:
-	// 	c.markup(from.Before)
+	// 	c.gaps(from.Before)
 	// 	to = &ast.EmptyStmt{}
-	// 	c.markup(from.After)
+	// 	c.gaps(from.After)
 	case *Fallthrough:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BranchStmt{
 			TokPos: c.add(lenFallthrough),
 			Tok:    token.FALLTHROUGH,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *For:
 		if from.Body == nil {
 			from.Body = &Block{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ForStmt{
 			For:  c.add(lenFor),
 			Init: c.stmt(from.Init),
@@ -1069,27 +1069,27 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 			Post: c.stmt(from.Post),
 			Body: c.stmt(from.Body).(*ast.BlockStmt),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Go:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.GoStmt{
 			Go:   c.add(lenGo),
 			Call: c.expr(from.Call).(*ast.CallExpr),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Goto:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.BranchStmt{
 			TokPos: c.add(lenGoto),
 			Tok:    token.GOTO,
 			Label:  c.expr(from.Label).(*ast.Ident),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *If:
 		if from.Body == nil {
 			from.Body = &Block{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.IfStmt{
 			If:   c.add(lenIf),
 			Init: c.stmt(from.Init),
@@ -1097,32 +1097,32 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 			Body: c.stmt(from.Body).(*ast.BlockStmt),
 			Else: c.stmt(from.Else),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Inc:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.IncDecStmt{
 			X:      c.expr(from.Left),
 			TokPos: c.add(lenInc),
 			Tok:    token.INC,
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Label:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.LabeledStmt{
 			Label: c.expr(from.Label).(*ast.Ident),
 			Colon: c.add(lenColon),
 			Stmt:  c.stmt(from.Stmt),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *MultiplyAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenMulAssign),
 			Tok:    token.MUL_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Range:
 		var t token.Token
 		var l int
@@ -1136,7 +1136,7 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 		if from.Body == nil {
 			from.Body = &Block{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.RangeStmt{
 			For:    c.add(lenFor),
 			Key:    c.expr(from.Key),
@@ -1146,73 +1146,73 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 			X:      c.expr(from.Container),
 			Body:   c.stmt(from.Body).(*ast.BlockStmt),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *RemainderAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenRemAssign),
 			Tok:    token.REM_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Return:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.ReturnStmt{
 			Return:  c.add(lenReturn),
 			Results: c.exprs(from.Results),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Select:
 		if from.Body == nil {
 			from.Body = &Block{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.SelectStmt{
 			Select: c.add(lenSelect),
 			Body:   c.stmt(from.Body).(*ast.BlockStmt),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Send:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.SendStmt{
 			Chan:  c.expr(from.Left),
 			Arrow: c.add(lenArrow),
 			Value: c.expr(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ShiftLeftAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenShlAssign),
 			Tok:    token.SHL_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *ShiftRightAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenShrAssign),
 			Tok:    token.SHR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *SubtractAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenSubAssign),
 			Tok:    token.SUB_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *Switch:
 		if from.Body == nil {
 			from.Body = &Block{}
 		}
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		if from.Type == nil {
 			to = &ast.SwitchStmt{
 				Switch: c.add(lenSwitch),
@@ -1228,16 +1228,16 @@ func (c *syntaxConverter) stmt(from Statement) (to ast.Stmt) {
 				Body:   c.stmt(from.Body).(*ast.BlockStmt),
 			}
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	case *XorAssign:
-		c.markup(from.Before)
+		c.gaps(from.Before)
 		to = &ast.AssignStmt{
 			Lhs:    c.exprs(from.Left),
 			TokPos: c.add(lenXorAssign),
 			Tok:    token.XOR_ASSIGN,
 			Rhs:    c.exprs(from.Right),
 		}
-		c.markup(from.After)
+		c.gaps(from.After)
 	default:
 		if d, ok := from.(Declaration); ok {
 			to = &ast.DeclStmt{Decl: c.decl(d)}
