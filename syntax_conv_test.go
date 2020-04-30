@@ -4,9 +4,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"testing"
-
-	"github.com/kr/pretty"
 )
 
 // func TestFun(t *testing.T) {
@@ -452,11 +449,10 @@ func parseFile(content string) *ast.File {
 	return f
 }
 
+/*
 func TestParse(t *testing.T) {
 	fset, f := parse(`package p
 
-/* Test
-int */
 func f() {}
 `)
 	pretty.Println(fset)
@@ -464,7 +460,6 @@ func f() {}
 	t.FailNow()
 }
 
-/*
 func TestEmpty(t *testing.T) {
 	p, err := turbine.Load("github.com/willfaught/turbine/syntax/testdata/empty")
 	if err != nil {
