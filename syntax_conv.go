@@ -1,10 +1,8 @@
 package turbine
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/token"
 	"strings"
 )
@@ -81,18 +79,13 @@ var (
 	lenXorAssign    = len(token.XOR_ASSIGN.String())
 )
 
-func ToNode(s Syntax) (*token.FileSet, ast.Node) {
+func SyntaxNode(s Syntax) (*token.FileSet, ast.Node) {
 	c := newSyntaxConv()
 	return c.tokenFileSet, c.node(s)
 }
 
-func ToString(s Syntax) (string, error) {
-	fset, n := ToNode(s)
-	b := &bytes.Buffer{}
-	if err := format.Node(b, fset, n); err != nil {
-		return "", fmt.Errorf("cannot format node: %v", err)
-	}
-	return b.String(), nil
+func SyntaxString(s Syntax) (string, error) {
+	return NodeString(SyntaxNode(s))
 }
 
 type syntaxConv struct {
