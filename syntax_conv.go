@@ -221,6 +221,9 @@ func (c *syntaxConv) decl(from Declaration) (to ast.Decl) {
 }
 
 func (c *syntaxConv) decls(from []Declaration) (to []ast.Decl) {
+	if len(from) == 0 {
+		return nil
+	}
 	to = make([]ast.Decl, len(from))
 	for i, d := range from {
 		to[i] = c.decl(d)
@@ -687,6 +690,9 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 }
 
 func (c *syntaxConv) exprs(from []Expression) (to []ast.Expr) {
+	if len(from) == 0 {
+		return nil
+	}
 	to = make([]ast.Expr, len(from))
 	for i, e := range from {
 		to[i] = c.expr(e)
@@ -737,6 +743,9 @@ func (c *syntaxConv) gaps(gs []Gap) {
 }
 
 func (c *syntaxConv) idents(from []*Name) (to []*ast.Ident) {
+	if len(from) == 0 {
+		return nil
+	}
 	to = make([]*ast.Ident, len(from))
 	for i, n := range from {
 		to[i] = c.expr(n).(*ast.Ident)
@@ -908,6 +917,9 @@ func (c *syntaxConv) spec(from Syntax) (to ast.Spec) {
 }
 
 func (c *syntaxConv) specs(from []Declaration) (to []ast.Spec) {
+	if len(from) == 0 {
+		return nil
+	}
 	to = make([]ast.Spec, len(from))
 	for i, d := range from {
 		to[i] = c.spec(d)
@@ -1249,6 +1261,9 @@ func (c *syntaxConv) stmt(from Statement) (to ast.Stmt) {
 }
 
 func (c *syntaxConv) stmts(from []Statement) (to []ast.Stmt) {
+	if len(from) == 0 {
+		return nil
+	}
 	to = make([]ast.Stmt, len(from))
 	for i, s := range from {
 		to[i] = c.stmt(s)
