@@ -660,9 +660,8 @@ func (c *syntaxConv) expr(from Expression) (to ast.Expr) {
 		}
 		c.gaps(from.Before)
 		to = &ast.StructType{
-			Struct:     c.add(lenStruct),
-			Fields:     c.node(from.Fields).(*ast.FieldList),
-			Incomplete: false, // TODO: What is this for?
+			Struct: c.add(lenStruct),
+			Fields: c.node(from.Fields).(*ast.FieldList),
 		}
 		c.gaps(from.After)
 	case *Subtract:
