@@ -1,5 +1,24 @@
 package turbine
 
+import (
+	"testing"
+
+	"github.com/kr/pretty"
+)
+
+func TestConvEmpty(t *testing.T) {
+	fset, f := parse(` /*1*/ //2
+package p
+`)
+	a := NodeSyntax(fset, f)
+	// e := &File{Package: &Name{Text: "p"}}
+	pretty.Println(a)
+	// if !reflect.DeepEqual(a, e) {
+	// 	pretty.Ldiff(t, a, e)
+	// }
+	t.FailNow()
+}
+
 /*
 import (
 	"bytes"
