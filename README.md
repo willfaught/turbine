@@ -1,9 +1,6 @@
 # turbine
 
-[![Documentation](https://godoc.org/github.com/willfaught/turbine/turbine?status.svg)](https://godoc.org/github.com/willfaught/turbine/turbine)
-[![Build](https://travis-ci.org/willfaught/turbine.svg?branch=master)](https://travis-ci.org/willfaught/turbine)
-[![Report](https://goreportcard.com/badge/github.com/willfaught/turbine/turbine)](https://goreportcard.com/report/github.com/willfaught/turbine/turbine)
-[![Test Coverage](https://coveralls.io/repos/github/willfaught/turbine/badge.svg?branch=master)](https://coveralls.io/github/willfaught/turbine?branch=master)
+[![Go Reference](https://pkg.go.dev/badge/go.dev/pkg/github.com/willfaught/turbine.svg)](https://pkg.go.dev/go.dev/pkg/github.com/willfaught/turbine)
 
 Turbine generates Go files from other Go files. Go file templates are transformed like this:
 
