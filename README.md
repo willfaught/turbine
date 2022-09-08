@@ -25,7 +25,7 @@ Several other subcommands provide useful Go file templates.
 
 A common scenario is to generate a Go file based on information about a declaration in another Go file. The turbine package has wys to facilitate getting that information and using it as a template context.
 
-*Note: This document is woefully incomplete. More will come.*
+*Note: This document is woefully incomplete.*
 
 ## Usage
 
