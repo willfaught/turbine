@@ -10,19 +10,10 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-// LoadPackage returns the package for importPath.
-func LoadPackage(importPath string) (*Package, error) {
-	return Loader{}.LoadPackage(importPath)
-}
-
-// LoadTestPackage returns the test package for importPath.
-func LoadTestPackage(importPath string) (*Package, error) {
-	return Loader{}.LoadTestPackage(importPath)
-}
-
-// LoadExternalTestPackage returns the external test package for importPath.
-func LoadExternalTestPackage(importPath string) (*Package, error) {
-	return Loader{}.LoadExternalTestPackage(importPath)
+// Package is file information for a Go package.
+type Package struct {
+	FileNodes     []*ast.File
+	FilePositions *token.FileSet
 }
 
 // Loader provides Packages for import paths.
@@ -114,8 +105,17 @@ func (l Loader) LoadExternalTestPackage(importPath string) (*Package, error) {
 	return nil, nil
 }
 
-// Package is file information for a Go package.
-type Package struct {
-	FileNodes     []*ast.File
-	FilePositions *token.FileSet
+// LoadPackage returns the package for importPath.
+func LoadPackage(importPath string) (*Package, error) {
+	return Loader{}.LoadPackage(importPath)
+}
+
+// LoadTestPackage returns the test package for importPath.
+func LoadTestPackage(importPath string) (*Package, error) {
+	return Loader{}.LoadTestPackage(importPath)
+}
+
+// LoadExternalTestPackage returns the external test package for importPath.
+func LoadExternalTestPackage(importPath string) (*Package, error) {
+	return Loader{}.LoadExternalTestPackage(importPath)
 }
