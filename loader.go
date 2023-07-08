@@ -12,8 +12,8 @@ import (
 
 // Package is file information for a Go package.
 type Package struct {
-	FileNodes     []*ast.File
-	FilePositions *token.FileSet
+	Files     []*ast.File
+	Positions *token.FileSet
 }
 
 // Loader provides Packages for import paths.
@@ -49,7 +49,7 @@ func (l Loader) LoadPackage(importPath string) (*Package, error) {
 	if len(ps) == 0 {
 		return nil, nil
 	}
-	return &Package{FileNodes: ps[0].Syntax, FilePositions: fset}, nil
+	return &Package{Files: ps[0].Syntax, Positions: fset}, nil
 }
 
 // LoadTestPackage returns the test package for importPath.
@@ -72,7 +72,7 @@ func (l Loader) LoadTestPackage(importPath string) (*Package, error) {
 		if p.PkgPath == importPath {
 			for _, f := range p.GoFiles {
 				if strings.HasSuffix(f, "_test.go") {
-					return &Package{FileNodes: p.Syntax, FilePositions: fset}, nil
+					return &Package{Files: p.Syntax, Positions: fset}, nil
 				}
 			}
 		}
@@ -99,7 +99,7 @@ func (l Loader) LoadExternalTestPackage(importPath string) (*Package, error) {
 	pkgPath := importPath + "_test"
 	for _, p := range ps {
 		if p.PkgPath == pkgPath {
-			return &Package{FileNodes: p.Syntax, FilePositions: fset}, nil
+			return &Package{Files: p.Syntax, Positions: fset}, nil
 		}
 	}
 	return nil, nil

@@ -14,10 +14,10 @@ func TestLoader(t *testing.T) {
 			if p == nil {
 				t.Error("package is nil")
 			} else {
-				if p.FileNodes == nil {
+				if p.Files == nil {
 					t.Error("no file nodes")
 				}
-				if p.FilePositions == nil {
+				if p.Positions == nil {
 					t.Error("no file positions")
 				}
 			}
