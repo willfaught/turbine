@@ -1,92 +1,78 @@
 package turbine
 
-import (
-	"go/ast"
-	"go/types"
-	"sort"
-)
+// func varGroups(vs []*types.Var, fs []*ast.Field) (joined, ordered, original, split []*VarGroup) {
+// 	if len(fs) == 0 {
+// 		for _, v := range vs {
+// 			var g = &VarGroup{Type: newType(v.Type(), nil)}
 
-func varGroups(vs []*types.Var, fs []*ast.Field) (joined, ordered, original, split []*VarGroup) {
-	if len(fs) == 0 {
-		for _, v := range vs {
-			var g = &VarGroup{Type: newType(v.Type(), nil)}
+// 			joined = append(joined, g)
+// 			ordered = append(ordered, g)
+// 			original = append(original, g)
+// 			split = append(split, g)
+// 		}
 
-			joined = append(joined, g)
-			ordered = append(ordered, g)
-			original = append(original, g)
-			split = append(split, g)
-		}
+// 		sort.Sort(byType(ordered))
 
-		sort.Sort(byType(ordered))
+// 		return
+// 	}
 
-		return
-	}
+// 	var varindex int
+// 	var syntaxids = map[string][]*Ident{}
+// 	var syntaxtype = map[string]*Type{}
 
-	var varindex int
-	var syntaxids = map[string][]*Ident{}
-	var syntaxtype = map[string]*Type{}
+// 	for _, f := range fs {
+// 		var v = vs[varindex]
+// 		var t = newType(v.Type(), f.Type)
+// 		var g = &VarGroup{Type: t}
+// 		var s = t.Syntax
 
-	for _, f := range fs {
-		var v = vs[varindex]
-		var t = newType(v.Type(), f.Type)
-		var g = &VarGroup{Type: t}
-		var s = t.Syntax
+// 		syntaxtype[s] = t
 
-		syntaxtype[s] = t
+// 		for _, n := range f.Names {
+// 			var id = newIdent(n.Name)
 
-		for _, n := range f.Names {
-			var id = newIdent(n.Name)
+// 			g.Idents = append(g.Idents, id)
+// 			split = append(split, &VarGroup{Idents: []*Ident{id}, Type: t})
 
-			g.Idents = append(g.Idents, id)
-			split = append(split, &VarGroup{Idents: []*Ident{id}, Type: t})
+// 			varindex++
+// 		}
 
-			varindex++
-		}
+// 		original = append(original, g)
 
-		original = append(original, g)
+// 		if last := len(joined) - 1; len(joined) == 0 || joined[last].Type.Syntax != s {
+// 			joined = append(joined, g)
+// 		} else {
+// 			joined[last].Idents = append(joined[last].Idents, g.Idents...)
+// 		}
 
-		if last := len(joined) - 1; len(joined) == 0 || joined[last].Type.Syntax != s {
-			joined = append(joined, g)
-		} else {
-			joined[last].Idents = append(joined[last].Idents, g.Idents...)
-		}
+// 		syntaxids[s] = append(syntaxids[s], g.Idents...)
+// 		syntaxtype[s] = t
+// 	}
 
-		syntaxids[s] = append(syntaxids[s], g.Idents...)
-		syntaxtype[s] = t
-	}
+// 	for s, t := range syntaxtype {
+// 		sort.Sort(byName(syntaxids[s]))
+// 		ordered = append(ordered, &VarGroup{Idents: syntaxids[s], Type: t})
+// 	}
 
-	for s, t := range syntaxtype {
-		sort.Sort(byName(syntaxids[s]))
-		ordered = append(ordered, &VarGroup{Idents: syntaxids[s], Type: t})
-	}
+// 	sort.Sort(byType(ordered))
 
-	sort.Sort(byType(ordered))
+// 	return
+// }
 
-	return
-}
-
-// Var is a variable declaration. TODO.
 type Var struct {
-	// TODO
-	Ident *Ident
-
-	// TODO
-	Type *Type
+	Name Name
+	Type *Typ
 }
 
-// VarGroup is a group of variable declarations. TODO.
 type VarGroup struct {
-	// TODO
-	Idents []*Ident
-
-	// TODO
-	Type *Type
+	Idents []Name
+	Type   *Type
 }
 
-type byName []*Ident
+type byName []Name
 
 func (b byName) Len() int           { return len(b) }
-func (b byName) Less(i, j int) bool { return b[i].Name < b[j].Name }
+func (b byName) Less(i, j int) bool { return b[i] < b[j] }
 func (b byName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 
 type byType []*VarGroup

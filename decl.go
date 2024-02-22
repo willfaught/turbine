@@ -3,254 +3,224 @@ package turbine
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/importer"
-	"go/parser"
 	"go/token"
 	"go/types"
-	"path/filepath"
-	"strings"
+
+	"github.com/willfaught/forklift"
 )
-
-func doc(c *ast.CommentGroup) ([]string, []string) {
-	var lines = docLines(c)
-
-	return lines, docRaw(lines)
-}
-
-func docLines(g *ast.CommentGroup) []string {
-	var ss []string
-
-	if g == nil {
-		return ss
-	}
-
-	for _, c := range g.List {
-		ss = append(ss, c.Text)
-	}
-
-	return ss
-}
-
-func docRaw(ss []string) []string {
-	var raw []string
-
-	for _, s := range ss {
-		s = strings.TrimLeft(s, "/ ")
-
-		if s != "" {
-			raw = append(raw, s)
-		}
-	}
-
-	return raw
-}
 
 func errFind(importpath, ident string) error {
 	return fmt.Errorf("cannot find declaration: %v.%v", importpath, ident)
 }
 
-func errParse(err error) error {
-	return fmt.Errorf("cannot parse package: %v", err)
-}
-
-func findDecl(p *ast.Package, ident string) ast.Decl {
-	var match ast.Decl
-
-	ast.Inspect(p, func(n ast.Node) bool {
-		if n == nil || match != nil {
-			return false
-		}
-
-		switch n := n.(type) {
-		case *ast.FuncDecl:
-			if n.Recv != nil {
-				return true
-			}
-
-			if n.Name.Name == ident {
-				match = n
-
-				return false
-			}
-
-		case *ast.GenDecl:
-			if s := findSpec(n, ident); s != nil {
-				match = n
-
-				return false
-			}
-		}
-
-		return true
-	})
-
-	return match
-}
-
-func findPackage(fset *token.FileSet, path string) (*ast.Package, *types.Package, error) {
-	var c = build.Default
-
-	c.CgoEnabled = true
-
-	var bp, err = c.Import(path, "", build.ImportComment)
-
-	if err != nil {
-		return nil, nil, errParse(err)
-	}
-
-	var afs []*ast.File
-	var paths = map[string]*ast.File{}
-
-	for _, bf := range append(bp.GoFiles, bp.CgoFiles...) { // TODO: Test files?
-		var path = filepath.Join(bp.Dir, bf)
-		var af, err = parser.ParseFile(fset, path, nil, parser.ParseComments)
-
-		if err != nil {
-			return nil, nil, errParse(err)
-		}
-
-		paths[path] = af
-		afs = append(afs, af)
-	}
-
-	var ap = &ast.Package{Name: afs[0].Name.Name, Files: paths}
-	tp, err := (&types.Config{FakeImportC: true, IgnoreFuncBodies: true, Importer: importer.Default()}).Check(bp.ImportPath, fset, afs, nil)
-
-	if err != nil {
-		return nil, nil, errParse(err)
-	}
-
-	return ap, tp, nil
-}
-
 func findSpec(d *ast.GenDecl, ident string) ast.Spec {
-	for _, s := range d.Specs {
-		switch s := s.(type) {
-		case *ast.TypeSpec:
-			if s.Name.Name == ident {
-				return s
-			}
-
-		case *ast.ValueSpec:
-			for _, n := range s.Names {
-				if n.Name == ident {
-					return s
-				}
-			}
-		}
-	}
 
 	return nil
 }
 
-func findType(p *types.Package, ident string) types.Type {
-	return searchScope(p.Scope(), ident)
-}
-
-func searchScope(s *types.Scope, ident string) types.Type {
-	if o := s.Lookup(ident); o != nil {
-		return o.Type()
-	}
-
-	for i, n := 0, s.NumChildren(); i < n; i++ {
-		if t := searchScope(s.Child(i), ident); t != nil {
-			return t
+func searchDecl(fs []*ast.File, name string) ast.Decl {
+	var match ast.Decl
+	for _, f := range fs {
+		ast.Inspect(f, func(node ast.Node) bool {
+			if node == nil || match != nil {
+				return false
+			}
+			switch node := node.(type) {
+			case *ast.FuncDecl:
+				if node.Name.Name == name {
+					match = node
+					return false
+				}
+			case *ast.GenDecl:
+				for _, spec := range node.Specs {
+					switch spec := spec.(type) {
+					case *ast.TypeSpec:
+						if spec.Name.Name == name {
+							match = node
+							return false
+						}
+					case *ast.ValueSpec:
+						for _, ident := range spec.Names {
+							if ident.Name == name {
+								match = node
+								return false
+							}
+						}
+					}
+				}
+				if match != nil {
+					match = node
+					return false
+				}
+			}
+			return true
+		})
+		if match != nil {
+			break
 		}
 	}
+	return match
+}
 
+func searchObject(s *types.Scope, ident string) types.Object {
+	if o := s.Lookup(ident); o != nil {
+		return o
+	}
+	for i, n := 0, s.NumChildren(); i < n; i++ {
+		if o := searchObject(s.Child(i), ident); o != nil {
+			return o
+		}
+	}
 	return nil
 }
 
 // Decl is the documentation, identifier, syntax, type, and value for a package declaration.
 type Decl struct {
-	Doc      []string // The documentation lines.
-	DocLines []string // The documentation lines stripped of line comment syntax.
-	Ident    *Ident   // The identifier.
-	IsConst  bool     // Whether it is a constant.
-	IsFunc   bool     // Whether it is a function.
-	IsType   bool     // Whether it is a type.
-	IsVar    bool     // Whether it is a variable.
-	Type     *Type    // The type.
-	Value    string   // The value.
+	Doc   []string
+	Ident Name
+	Type  *Typ
+	kind  declKind
+	// TODO: Value
 }
 
-// NewDecl returns a Decl for the declaration in package importpath named ident.
-func NewDecl(importpath, ident string) (*Decl, error) {
-	var fset = token.NewFileSet()
-	var ap, tp, err = findPackage(fset, importpath)
+type declKind int
 
+const (
+	declKindConst declKind = iota
+	declKindFunc
+	declKindType
+	declKindVar
+)
+
+func (d Decl) IsConst() bool {
+	return d.kind == declKindConst
+}
+
+func (d Decl) IsFunc() bool {
+	return d.kind == declKindFunc
+}
+
+func (d Decl) IsType() bool {
+	return d.kind == declKindType
+}
+
+func (d Decl) IsVar() bool {
+	return d.kind == declKindVar
+}
+
+func makeDoc(cg *ast.CommentGroup) []string {
+	if cg == nil {
+		return nil
+	}
+	ss := make([]string, 0, len(cg.List))
+	for _, c := range cg.List {
+		ss = append(ss, c.Text)
+	}
+	return ss
+}
+
+// LoadDecl returns a Decl for the declaration named name in package path.
+func LoadDecl(path, name string) (*Decl, error) {
+	p, err := forklift.LoadPackage(path)
 	if err != nil {
 		return nil, err
 	}
-
-	var fd = findDecl(ap, ident)
-
-	if fd == nil {
-		return nil, errFind(importpath, ident)
+	ad := searchDecl(p.Syntax, name)
+	if ad == nil {
+		return nil, errFind(path, name)
 	}
-
-	var ft = findType(tp, ident)
-
-	if ft == nil {
-		return nil, errFind(importpath, ident)
+	o := searchObject(p.Types.Scope(), name)
+	if o == nil {
+		return nil, errFind(path, name)
 	}
-
 	var d Decl
-
-	switch fd := fd.(type) {
+	switch ad := ad.(type) {
 	case *ast.FuncDecl:
-		d.Doc, d.DocLines = doc(fd.Doc)
-		d.Ident = newIdent(fd.Name.Name)
-		d.IsFunc = true
-		d.Type = newType(ft, fd.Type)
-
+		d.Doc = makeDoc(ad.Doc)
+		d.Ident = Name(ad.Name.Name)
+		d.Type = &Typ{t: o.Type()}
+		d.kind = declKindFunc
 	case *ast.GenDecl:
-		var s = findSpec(fd, ident)
-
+		s := findSpec(ad, name)
 		switch s := s.(type) {
 		case *ast.TypeSpec:
-			d.Doc, d.DocLines = doc(fd.Doc)
-			d.Ident = newIdent(s.Name.Name)
-			d.IsType = true
-			d.Type = newType(ft, s.Type)
-
+			doc := s.Doc
+			if doc == nil {
+				doc = ad.Doc
+			}
+			d.Doc = makeDoc(doc)
+			d.Ident = Name(s.Name.Name)
+			d.Type = &Typ{t: o.Type()}
+			d.kind = declKindType
 		case *ast.ValueSpec:
-			var match = -1
-
+			match := -1
 			for i, n := range s.Names {
-				if n.Name == ident {
+				if n.Name == name {
 					match = i
-
 					break
 				}
 			}
-
-			d.Doc, d.DocLines = doc(fd.Doc)
-			d.Ident = newIdent(s.Names[match].Name)
-			d.Type = newType(ft, s.Type)
-
-			if len(s.Values) > 0 {
-				d.Value = types.ExprString(s.Values[match])
-			}
-
-			switch fd.Tok {
+			d.Doc = makeDoc(ad.Doc)
+			d.Ident = Name(s.Names[match].Name)
+			d.Type = &Typ{t: o.Type()}
+			switch ad.Tok {
 			case token.CONST:
-				d.IsConst = true
-
+				d.kind = declKindConst
 			case token.VAR:
-				d.IsVar = true
-
+				d.kind = declKindVar
 			default:
-				panic(fd.Tok)
+				panic(ad.Tok)
 			}
+		default:
+			panic(s)
 		}
-
 	default:
-		panic(fd)
+		panic(ad)
 	}
-
 	return &d, nil
+}
+
+type Package struct {
+	All    []*Decl
+	Doc    []string
+	Consts []*Decl
+	Funcs  []*Decl
+	Types  []*Decl
+	Vars   []*Decl
+}
+
+func LoadPackage(path string) (*Package, error) {
+	fp, err := forklift.LoadPackage(path)
+	if err != nil {
+		return nil, err
+	}
+	var tp Package
+	for _, f := range fp.Syntax {
+		var match ast.Decl
+		ast.Inspect(f, func(n ast.Node) bool {
+			if n == nil {
+				return false
+			}
+			switch n := n.(type) {
+			case *ast.FuncDecl:
+
+				if n.Name.Name == ident {
+					match = n
+					return false
+				}
+			case *ast.GenDecl:
+				if s := findSpec(n, ident); s != nil {
+					match = n
+					return false
+				}
+			}
+			return false
+		})
+		if match != nil {
+			break
+		}
+	}
+	return ds, nil
 }
 
 /*
