@@ -1,279 +1,280 @@
 package turbine
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
-	"go/types"
+	"sort"
 
 	"github.com/willfaught/forklift"
+	"golang.org/x/tools/go/packages"
 )
 
-func errFind(importpath, ident string) error {
-	return fmt.Errorf("cannot find declaration: %v.%v", importpath, ident)
-}
-
-func findSpec(d *ast.GenDecl, ident string) ast.Spec {
-
-	return nil
-}
-
-func searchDecl(fs []*ast.File, name string) ast.Decl {
-	var match ast.Decl
-	for _, f := range fs {
-		ast.Inspect(f, func(node ast.Node) bool {
-			if node == nil || match != nil {
-				return false
-			}
-			switch node := node.(type) {
-			case *ast.FuncDecl:
-				if node.Name.Name == name {
-					match = node
-					return false
-				}
-			case *ast.GenDecl:
-				for _, spec := range node.Specs {
-					switch spec := spec.(type) {
-					case *ast.TypeSpec:
-						if spec.Name.Name == name {
-							match = node
-							return false
-						}
-					case *ast.ValueSpec:
-						for _, ident := range spec.Names {
-							if ident.Name == name {
-								match = node
-								return false
-							}
-						}
-					}
-				}
-				if match != nil {
-					match = node
-					return false
-				}
-			}
-			return true
-		})
-		if match != nil {
-			break
-		}
-	}
-	return match
-}
-
-func searchObject(s *types.Scope, ident string) types.Object {
-	if o := s.Lookup(ident); o != nil {
-		return o
-	}
-	for i, n := 0, s.NumChildren(); i < n; i++ {
-		if o := searchObject(s.Child(i), ident); o != nil {
-			return o
-		}
-	}
-	return nil
-}
-
-// Decl is the documentation, identifier, syntax, type, and value for a package declaration.
 type Decl struct {
-	Doc   []string
-	Ident Name
-	Type  *Typ
-	kind  declKind
-	// TODO: Value
+	Name Name
+	Type *Type
+	kind declKind
 }
 
 type declKind int
 
 const (
-	declKindConst declKind = iota
+	declKindInvalid declKind = iota
+	declKindConst
 	declKindFunc
 	declKindType
 	declKindVar
 )
 
-func (d Decl) IsConst() bool {
+func (d *Decl) IsConst() bool {
 	return d.kind == declKindConst
 }
 
-func (d Decl) IsFunc() bool {
+func (d *Decl) IsFunc() bool {
 	return d.kind == declKindFunc
 }
 
-func (d Decl) IsType() bool {
+func (d *Decl) IsType() bool {
 	return d.kind == declKindType
 }
 
-func (d Decl) IsVar() bool {
+func (d *Decl) IsVar() bool {
 	return d.kind == declKindVar
 }
 
-func makeDoc(cg *ast.CommentGroup) []string {
-	if cg == nil {
-		return nil
-	}
-	ss := make([]string, 0, len(cg.List))
-	for _, c := range cg.List {
-		ss = append(ss, c.Text)
-	}
-	return ss
+type DeclList []*Decl
+
+func (dl DeclList) Sorted() DeclList {
+	dl2 := make(DeclList, len(dl))
+	copy(dl2, dl)
+	sort.Slice(dl2, func(i, j int) bool {
+		return dl2[i].Name < dl2[j].Name
+	})
+	return dl2
 }
 
-// LoadDecl returns a Decl for the declaration named name in package path.
+type DeclGroup struct {
+	Names []Name
+	Type  *Type
+	kind  declKind
+}
+
+func (dg *DeclGroup) IsConst() bool {
+	return dg.kind == declKindConst
+}
+
+func (dg *DeclGroup) IsType() bool {
+	return dg.kind == declKindType
+}
+
+func (dg *DeclGroup) IsVar() bool {
+	return dg.kind == declKindVar
+}
+
+func (dg *DeclGroup) Decls() DeclList {
+	dl := make(DeclList, len(dg.Names))
+	for i, n := range dg.Names {
+		dl[i] = &Decl{Name: n, Type: dg.Type, kind: dg.kind}
+	}
+	return dl
+}
+
+type DeclGroupList []*DeclGroup
+
+func (dgl DeclGroupList) Decls() DeclList {
+	var dl DeclList
+	for _, dg := range dgl {
+		dl = append(dl, dg.Decls()...)
+	}
+	return dl
+}
+
+type DeclBlock struct {
+	Groups DeclGroupList
+}
+
+func (db *DeclBlock) Decls() DeclList {
+	var dl DeclList
+	for _, dg := range db.Groups {
+		dl = append(dl, dg.Decls()...)
+	}
+	return dl
+}
+
+type DeclBlockList []*DeclBlock
+
+func (dbl DeclBlockList) Decls() DeclList {
+	var ds []*Decl
+	for _, db := range dbl {
+		ds = append(ds, db.Decls()...)
+	}
+	return ds
+}
+
+func (dbl DeclBlockList) DeclGroups() DeclGroupList {
+	var dgl DeclGroupList
+	for _, db := range dbl {
+		dgl = append(dgl, db.Groups...)
+	}
+	return dgl
+}
+
+// LoadPackageDecl returns a [*Decl] for the declaration in the package.
+// It returns nil if the declaration does not exist.
+func LoadPackageDecl(p *packages.Package, name string) *Decl {
+	o := p.Types.Scope().Lookup(name)
+	if o == nil {
+		return nil
+	}
+	d := &Decl{Name: Name(name), Type: &Type{t: o.Type()}}
+	for _, f := range p.Syntax {
+		ast.Inspect(f, func(n ast.Node) bool {
+			if n == nil || d.kind != declKindInvalid {
+				return false
+			}
+			switch n := n.(type) {
+			case *ast.FuncDecl:
+				if n.Name.Name == name {
+					d.kind = declKindFunc
+				}
+			case *ast.GenDecl:
+				for _, s := range n.Specs {
+					switch s := s.(type) {
+					case *ast.TypeSpec:
+						if s.Name.Name == name {
+							d.kind = declKindType
+						}
+					case *ast.ValueSpec:
+						for _, i := range s.Names {
+							if i.Name == name {
+								switch n.Tok {
+								case token.CONST:
+									d.kind = declKindConst
+								case token.VAR:
+									d.kind = declKindVar
+								default:
+									panic(n.Tok)
+								}
+								break
+							}
+						}
+					}
+				}
+			}
+			return false
+		})
+		if d.kind != declKindInvalid {
+			break
+		}
+	}
+	if d.kind == declKindInvalid {
+		return nil
+	}
+	return d
+}
+
+// LoadDecl returns a [*Decl] for the declaration in the package.
+// It returns nil if the declaration does not exist.
+// It returns an error if the package cannot be loaded.
 func LoadDecl(path, name string) (*Decl, error) {
 	p, err := forklift.LoadPackage(path)
 	if err != nil {
 		return nil, err
 	}
-	ad := searchDecl(p.Syntax, name)
-	if ad == nil {
-		return nil, errFind(path, name)
-	}
-	o := searchObject(p.Types.Scope(), name)
-	if o == nil {
-		return nil, errFind(path, name)
-	}
-	var d Decl
-	switch ad := ad.(type) {
-	case *ast.FuncDecl:
-		d.Doc = makeDoc(ad.Doc)
-		d.Ident = Name(ad.Name.Name)
-		d.Type = &Typ{t: o.Type()}
-		d.kind = declKindFunc
-	case *ast.GenDecl:
-		s := findSpec(ad, name)
-		switch s := s.(type) {
-		case *ast.TypeSpec:
-			doc := s.Doc
-			if doc == nil {
-				doc = ad.Doc
-			}
-			d.Doc = makeDoc(doc)
-			d.Ident = Name(s.Name.Name)
-			d.Type = &Typ{t: o.Type()}
-			d.kind = declKindType
-		case *ast.ValueSpec:
-			match := -1
-			for i, n := range s.Names {
-				if n.Name == name {
-					match = i
-					break
-				}
-			}
-			d.Doc = makeDoc(ad.Doc)
-			d.Ident = Name(s.Names[match].Name)
-			d.Type = &Typ{t: o.Type()}
-			switch ad.Tok {
-			case token.CONST:
-				d.kind = declKindConst
-			case token.VAR:
-				d.kind = declKindVar
-			default:
-				panic(ad.Tok)
-			}
-		default:
-			panic(s)
-		}
-	default:
-		panic(ad)
-	}
-	return &d, nil
+	return LoadPackageDecl(p, name), nil
 }
 
 type Package struct {
-	All    []*Decl
-	Doc    []string
-	Consts []*Decl
-	Funcs  []*Decl
-	Types  []*Decl
-	Vars   []*Decl
+	All    DeclList
+	Consts DeclBlockList
+	Funcs  DeclList
+	Lookup map[string]*Decl
+	Types  DeclBlockList
+	Vars   DeclBlockList
 }
 
+// LoadPackage returns a [*Package] for the package.
+// It returns an error if the package cannot be loaded.
 func LoadPackage(path string) (*Package, error) {
 	fp, err := forklift.LoadPackage(path)
 	if err != nil {
 		return nil, err
 	}
-	var tp Package
+	tp := &Package{Lookup: map[string]*Decl{}}
 	for _, f := range fp.Syntax {
-		var match ast.Decl
-		ast.Inspect(f, func(n ast.Node) bool {
-			if n == nil {
+		ast.Inspect(f, func(an ast.Node) bool {
+			if an == nil {
 				return false
 			}
-			switch n := n.(type) {
+			switch an := an.(type) {
 			case *ast.FuncDecl:
-
-				if n.Name.Name == ident {
-					match = n
-					return false
+				td := &Decl{
+					Name: Name(an.Name.Name),
+					Type: &Type{t: fp.Types.Scope().Lookup(an.Name.Name).Type()},
+					kind: declKindFunc,
 				}
+				tp.All = append(tp.All, td)
+				tp.Lookup[string(td.Name)] = td
+				tp.Funcs = append(tp.Funcs, td)
 			case *ast.GenDecl:
-				if s := findSpec(n, ident); s != nil {
-					match = n
-					return false
+				var db DeclBlock
+				for _, s := range an.Specs {
+					switch s := s.(type) {
+					// TODO: ImportSpec
+					case *ast.TypeSpec:
+						dn := Name(s.Name.Name)
+						dt := &Type{t: fp.Types.Scope().Lookup(s.Name.Name).Type()}
+						d := &Decl{Name: dn, Type: dt, kind: declKindType}
+						dg := &DeclGroup{Names: []Name{dn}, Type: dt, kind: declKindType}
+						tp.All = append(tp.All, d)
+						tp.Lookup[string(d.Name)] = d
+						db.Groups = append(db.Groups, dg)
+					case *ast.ValueSpec:
+						var dg DeclGroup
+						var dt *Type
+						switch an.Tok {
+						case token.CONST:
+							dg.kind = declKindConst
+						case token.VAR:
+							dg.kind = declKindVar
+						default:
+							panic(an.Tok)
+						}
+						for _, name := range s.Names {
+							dn := Name(name.Name)
+							if dt == nil {
+								dt = &Type{t: fp.Types.Scope().Lookup(name.Name).Type()}
+							}
+							d := &Decl{Name: dn, Type: dt}
+							dg.Names = append(dg.Names, dn)
+							switch an.Tok {
+							case token.CONST:
+								d.kind = declKindConst
+							case token.VAR:
+								d.kind = declKindVar
+							default:
+								panic(an.Tok)
+							}
+							tp.All = append(tp.All, d)
+							tp.Lookup[string(d.Name)] = d
+						}
+						db.Groups = append(db.Groups, &dg)
+					default:
+						panic(s)
+					}
+				}
+				switch an.Tok {
+				case token.CONST:
+					tp.Consts = append(tp.Consts, &db)
+				case token.TYPE:
+					tp.Types = append(tp.Types, &db)
+				case token.VAR:
+					tp.Vars = append(tp.Vars, &db)
+				default:
+					panic(an.Tok)
 				}
 			}
 			return false
 		})
-		if match != nil {
-			break
-		}
 	}
-	return ds, nil
+	return tp, nil
 }
-
-/*
-func (m *Interface) receiver() (string, error) {
-	var names = map[string]struct{}{}
-
-	for _, method := range m.InterfaceMethods {
-		for _, p := range method.ParamsFlat {
-			names[p.Name] = struct{}{}
-		}
-
-		for _, r := range method.ResultsFlat {
-			names[r.Name] = struct{}{}
-		}
-	}
-
-	var words = camelcase.Split(m.ReceiverTypeName)
-	var initials []string
-
-	for i, word := range words {
-		var r, _ = utf8.DecodeRuneInString(word)
-
-		if r == utf8.RuneError {
-			return "", fmt.Errorf("type %v is invalid: invalid utf8 string", m.ReceiverTypeName)
-		}
-
-		initials = append(initials, strings.ToLower(fmt.Sprintf("%c", r)))
-		words[i] = strings.ToLower(word)
-	}
-
-	var tries = []string{
-		initials[0],
-		initials[len(initials)-1],
-		strings.Join(initials, ""),
-		words[0],
-		words[len(words)-1],
-	}
-
-	for _, name := range tries {
-		if _, ok := names[name]; !ok {
-			return name, nil
-		}
-	}
-
-	var name = initials[0]
-
-	for {
-		name += "_"
-
-		if _, ok := names[name]; !ok {
-			break
-		}
-	}
-
-	return name, nil
-}*/

@@ -61,12 +61,12 @@ package turbine
 
 type Var struct {
 	Name Name
-	Type *Typ
+	Type *Type
 }
 
 type VarGroup struct {
-	Idents []Name
-	Type   *Type
+	Names []Name
+	Type  *Type
 }
 
 type byName []Name
@@ -78,5 +78,5 @@ func (b byName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 type byType []*VarGroup
 
 func (b byType) Len() int           { return len(b) }
-func (b byType) Less(i, j int) bool { return b[i].Type.Syntax < b[j].Type.Syntax }
+func (b byType) Less(i, j int) bool { return b[i].Type.String() < b[j].Type.String() }
 func (b byType) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
